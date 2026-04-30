@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ElectraGuide</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com https://www.gstatic.com https://*.firebaseio.com https://firebase.googleapis.com https://*.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: blob: https://maps.gstatic.com https://maps.googleapis.com https://*.googleapis.com;">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Syne:wght@600;700;800&display=swap');
 
@@ -421,7 +422,10 @@ nav.top-bar.scrolled {
     <a class="nav-link" onclick="navTo('map')">Polling Map</a>
     <a class="nav-link" onclick="navTo('faq')">FAQ</a>
   </div>
-  <div class="nav-badge">🗳 Voting Phase</div>
+  <div style="display:flex; gap:8px;">
+    <div class="nav-badge" id="data-source-badge" style="background:rgba(220,38,38,0.15); color:var(--error); border-color:rgba(220,38,38,0.4);">Offline Mode (Fallback)</div>
+    <div class="nav-badge">🗳 Voting Phase</div>
+  </div>
 </nav>
 
 <div class="app-layout">
@@ -434,8 +438,8 @@ nav.top-bar.scrolled {
     <div class="menu-item" onclick="navTo('faq'); closeMobileMenu();">💬 FAQ</div>
 
     <div class="section-label">MY EPIC</div>
-    <input type="text" id="sb-epic-input" class="epic-input" placeholder="Enter EPIC number..." oninput="this.value=this.value.toUpperCase()">
-    <button class="btn-primary" onclick="lookupEpic(document.getElementById('sb-epic-input').value)">Find My Booth</button>
+    <input type="text" id="sb-epic-input" class="epic-input" aria-label="Enter EPIC number" placeholder="Enter EPIC number..." oninput="this.value=this.value.toUpperCase()">
+    <button class="btn-primary" aria-label="Find My Booth" onclick="lookupEpic(document.getElementById('sb-epic-input').value)">Find My Booth</button>
 
     <div class="section-label">QUICK ACTIONS</div>
     <div class="menu-item" onclick="sendMsg('How do I register?'); closeMobileMenu();">📝 Register to Vote</div>
@@ -504,9 +508,9 @@ nav.top-bar.scrolled {
         <div class="card">
           <div style="font-size:14px; margin-bottom:8px;">🪪 Find Your Polling Booth via EPIC</div>
           <div class="epic-row">
-            <input type="text" id="main-epic-input" class="epic-input-lg" placeholder="Enter your EPIC Number" oninput="this.value=this.value.toUpperCase()">
-            <button class="btn-primary" style="width:auto;" onclick="lookupEpic(document.getElementById('main-epic-input').value)">Find Booth</button>
-            <button class="btn-ghost" style="width:auto;" onclick="sendMsg('Where is my EPIC number?')">Help</button>
+            <input type="text" id="main-epic-input" class="epic-input-lg" aria-label="Enter your EPIC Number" placeholder="Enter your EPIC Number" oninput="this.value=this.value.toUpperCase()">
+            <button class="btn-primary" style="width:auto;" aria-label="Find Booth" onclick="lookupEpic(document.getElementById('main-epic-input').value)">Find Booth</button>
+            <button class="btn-ghost" style="width:auto;" aria-label="Help" onclick="sendMsg('Where is my EPIC number?')">Help</button>
           </div>
           <div id="epic-result" class="epic-result"></div>
         </div>
@@ -647,10 +651,75 @@ nav.top-bar.scrolled {
 
 </div>
 
-<!-- Google Maps Script -->
-<script src="https://maps.googleapis.com/maps/api/js?callback=initMap" async defer></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
 
 <script>
+// --- FIREBASE CONFIGURATION ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDummyKey-1234567890",
+  authDomain: "electraguide.firebaseapp.com",
+  databaseURL: "https://electraguide-default-rtdb.firebaseio.com",
+  projectId: "electraguide",
+  storageBucket: "electraguide.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef123456",
+  measurementId: "G-DUMMYID"
+};
+
+let db, analytics;
+let isFirebaseActive = false;
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  analytics = firebase.analytics();
+  isFirebaseActive = true;
+  const badge = document.getElementById('data-source-badge');
+  if (badge) {
+    badge.textContent = "Data Source: Firebase";
+    badge.style.background = "rgba(22,163,74,0.15)";
+    badge.style.color = "var(--success)";
+    badge.style.borderColor = "rgba(22,163,74,0.4)";
+  }
+} catch(e) {
+  console.warn("Firebase initialization failed, using offline fallback.");
+}
+
+function logAnalytics(eventName, params = {}) {
+  console.log(`[Analytics] ${eventName} Triggered`, params);
+  if(isFirebaseActive && analytics) {
+    analytics.logEvent(eventName, params);
+  }
+}
+
+// --- UTILS & SECURITY ---
+const sanitize = (str) => str ? String(str).replace(/[&<>'"]/g, 
+  tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+) : '';
+
+let userLocation = null;
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(
+    pos => { userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; },
+    err => { console.warn("Geolocation denied or failed.", err); },
+    { timeout: 5000, maximumAge: 60000 }
+  );
+}
+
+let mapLoaded = false;
+function loadGoogleMaps() {
+  if (mapLoaded) return;
+  mapLoaded = true;
+  const script = document.createElement('script');
+  script.src = "https://maps.googleapis.com/maps/api/js?libraries=geometry&callback=initMap";
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+}
+
 // --- GLOBAL & RESPONSIVE ---
 function toggleMobileMenu() {
   document.getElementById('sidebar').classList.toggle('open');
@@ -673,9 +742,13 @@ function navTo(sectionId) {
   });
 
   // Handle map resize issue when tab opens
-  if (sectionId === 'map' && map) {
-    google.maps.event.trigger(map, 'resize');
-    if (currentLatLng) map.setCenter(currentLatLng);
+  if (sectionId === 'map') {
+    loadGoogleMaps();
+    if (typeof google !== 'undefined' && map) {
+      google.maps.event.trigger(map, 'resize');
+      if (currentLatLng) map.setCenter(currentLatLng);
+    }
+    logAnalytics('map_tab_viewed');
   }
 }
 
@@ -778,7 +851,11 @@ function initMap() {
 }
 
 function viewMapLocation(lat, lng, title, address) {
-  if (!map) return;
+  if (!map || typeof google === 'undefined') {
+    navTo('map');
+    setTimeout(() => viewMapLocation(lat, lng, title, address), 1000);
+    return;
+  }
   currentLatLng = { lat, lng };
   
   map.setCenter(currentLatLng);
@@ -829,6 +906,7 @@ function getDirections(destLat, destLng) {
 
 function requestDirectionsGlobal() {
   if (currentLatLng) {
+    logAnalytics('map_navigation_clicked', { lat: currentLatLng.lat, lng: currentLatLng.lng });
     getDirections(currentLatLng.lat, currentLatLng.lng);
   } else {
     alert('Please select a polling station first.');
@@ -844,30 +922,63 @@ const EPIC_DB = {
   "TN0056789012": { name:"Karthik Rajan", constituency:"Chennai Central", booth:"Corporation Higher Secondary School", address:"Anna Salai, Ward 9, Chennai", part:"Part 7, Serial 054", distance:"0.6 km", lat: 13.0827, lng: 80.2707 }
 };
 
-function lookupEpic(val) {
-  if (!val) return;
+let isLookingUp = false;
+async function lookupEpic(val) {
+  const sanitizedVal = sanitize(val).trim().toUpperCase();
+  if (!sanitizedVal || isLookingUp) return;
+  isLookingUp = true;
   closeMobileMenu();
   const res = document.getElementById('epic-result');
   res.className = 'epic-result loading';
   res.style.display = 'block';
   res.textContent = 'Searching database...';
   
+  logAnalytics('epic_lookup', { epic: sanitizedVal });
+
+  let data = null;
+  const cached = sessionStorage.getItem(`epic_${sanitizedVal}`);
+  
+  if (cached) {
+    data = JSON.parse(cached);
+  } else if (isFirebaseActive && db) {
+    try {
+      const fetchPromise = db.ref('voters/' + sanitizedVal).once('value');
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500));
+      const snapshot = await Promise.race([fetchPromise, timeoutPromise]);
+      data = snapshot.val();
+      if(data) sessionStorage.setItem(`epic_${sanitizedVal}`, JSON.stringify(data));
+    } catch(err) {
+      console.warn("Firebase fetch failed or timed out. Falling back to local DB.");
+      data = EPIC_DB[sanitizedVal];
+    }
+  } else {
+    data = EPIC_DB[sanitizedVal];
+  }
+  
   setTimeout(() => {
-    const data = EPIC_DB[val];
+    isLookingUp = false;
     if (data) {
+      let displayDist = sanitize(data.distance);
+      if (userLocation && typeof google !== 'undefined' && google.maps && google.maps.geometry) {
+        const dest = new google.maps.LatLng(data.lat, data.lng);
+        const origin = new google.maps.LatLng(userLocation.lat, userLocation.lng);
+        const distMeters = google.maps.geometry.spherical.computeDistanceBetween(origin, dest);
+        displayDist = (distMeters / 1000).toFixed(2) + " km (Dynamic)";
+      }
+
       res.className = 'epic-result success';
       res.innerHTML = `<strong style="color:var(--success)">✅ Match Found</strong><br><br>
-        Name: <b>${data.name}</b><br>
-        Constituency: ${data.constituency}<br>
-        Booth: <b>${data.booth}</b><br>
-        Address: ${data.address}<br>
-        Distance: <span style="color:var(--blue-bright)">${data.distance}</span><br>
-        <button class="btn-primary" style="margin-top:12px;" onclick="viewMapLocation(${data.lat}, ${data.lng}, '${data.booth}', '${data.address}')">View on Map & Navigate</button>`;
+        Name: <b>${sanitize(data.name)}</b><br>
+        Constituency: ${sanitize(data.constituency)}<br>
+        Booth: <b>${sanitize(data.booth)}</b><br>
+        Address: ${sanitize(data.address)}<br>
+        Distance: <span style="color:var(--blue-bright)">${displayDist}</span><br>
+        <button class="btn-primary" aria-label="View Map" style="margin-top:12px;" onclick="viewMapLocation(${data.lat}, ${data.lng}, '${sanitize(data.booth).replace(/'/g, "\\'")}', '${sanitize(data.address).replace(/'/g, "\\'")}')">View on Map & Navigate</button>`;
     } else {
       res.className = 'epic-result error';
       res.innerHTML = `❌ EPIC not found.<br>Try testing with: <b>KAR0012345678</b>`;
     }
-  }, 500);
+  }, 300);
 }
 
 // --- ELIGIBILITY ---
@@ -882,6 +993,7 @@ function wizNext(current, passed) {
   document.getElementById(`wq-${wizStep}`).classList.add('active');
   
   if (wizStep === 3) {
+    logAnalytics('eligibility_completed', { success: true });
     document.getElementById('wiz-result').innerHTML = `<div style="color:var(--success); font-family:var(--font-display); font-size:20px; border:1px solid var(--success); padding:16px; border-radius:12px; background:var(--success-bg);">✅ You are eligible to vote!</div>`;
   }
 }
@@ -979,17 +1091,23 @@ function getBotResponse(msg) {
 
 const chatMsgs = document.getElementById('chat-msgs');
 let lastBotMessage = "";
+let chatDebounce = null;
 
 function sendMsgInput() {
   const inp = document.getElementById('chat-input');
-  if (inp.value.trim() !== '') {
-    sendMsg(inp.value.trim());
-    inp.value = '';
+  const val = sanitize(inp.value.trim());
+  if (val !== '') {
+    if (chatDebounce) clearTimeout(chatDebounce);
+    chatDebounce = setTimeout(() => {
+      sendMsg(val);
+      inp.value = '';
+    }, 200);
   }
 }
 
 function sendMsg(text) {
   document.getElementById('bot-sugg').style.display = 'none';
+  logAnalytics('bot_message_sent', { query: text });
 
   const ub = document.createElement('div');
   ub.className = 'chat-bubble bubble-user';
