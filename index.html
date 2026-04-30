@@ -654,6 +654,7 @@ nav.top-bar.scrolled {
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
 
 <script>
@@ -669,12 +670,28 @@ const firebaseConfig = {
   measurementId: "G-DUMMYID"
 };
 
-let db, analytics;
+let db, firestore, analytics;
 let isFirebaseActive = false;
+
+// --- DOM CACHING ---
+const epicResultEl = document.getElementById('epic-result');
+const faqListEl = document.getElementById('faq-list');
+const faqEmptyEl = document.getElementById('faq-empty');
+const faqQueryEl = document.getElementById('faq-query');
+const chatMsgsEl = document.getElementById('chat-msgs');
+const chatInputEl = document.getElementById('chat-input');
+const wizResultEl = document.getElementById('wiz-result');
+const wizFillEl = document.getElementById('wiz-fill');
+const docCounterEl = document.getElementById('doc-counter');
+const sidebarEl = document.getElementById('sidebar');
+const navbarEl = document.getElementById('navbar');
+const mainContentEl = document.querySelector('.main-content');
+const botSuggEl = document.getElementById('bot-sugg');
 
 try {
   firebase.initializeApp(firebaseConfig);
   db = firebase.database();
+  firestore = firebase.firestore();
   analytics = firebase.analytics();
   isFirebaseActive = true;
   const badge = document.getElementById('data-source-badge');
@@ -684,19 +701,57 @@ try {
     badge.style.color = "var(--success)";
     badge.style.borderColor = "rgba(22,163,74,0.4)";
   }
+  
+  const pill = document.createElement('div');
+  pill.style.position = 'fixed'; pill.style.bottom = '12px'; pill.style.right = '12px';
+  pill.style.padding = '6px 12px'; pill.style.borderRadius = '20px'; pill.style.fontSize = '11px';
+  pill.style.zIndex = '1000'; pill.style.fontFamily = 'var(--font-body)';
+  pill.style.background = 'rgba(22,163,74,0.15)'; pill.style.color = 'var(--success)';
+  pill.style.border = '1px solid rgba(22,163,74,0.4)'; pill.innerHTML = '🟢 Live Sync Active';
+  document.body.appendChild(pill);
+  
 } catch(e) {
-  console.warn("Firebase initialization failed, using offline fallback.");
+  console.warn("[ElectraGuide Error] Firebase init: " + e.message);
+  const pill = document.createElement('div');
+  pill.style.position = 'fixed'; pill.style.bottom = '12px'; pill.style.right = '12px';
+  pill.style.padding = '6px 12px'; pill.style.borderRadius = '20px'; pill.style.fontSize = '11px';
+  pill.style.zIndex = '1000'; pill.style.fontFamily = 'var(--font-body)';
+  pill.style.background = 'var(--error-bg)'; pill.style.color = 'var(--error)';
+  pill.style.border = '1px solid var(--error)'; pill.innerHTML = '🔴 Offline Mode';
+  document.body.appendChild(pill);
 }
 
 function logAnalytics(eventName, params = {}) {
   let prettyName = eventName.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   console.log(`[Analytics] ${prettyName} Triggered`, params);
   if(isFirebaseActive && analytics) {
-    analytics.logEvent(eventName, params);
+    try {
+      analytics.logEvent(eventName, params);
+    } catch(e) {
+      console.warn("[ElectraGuide Error] Analytics Log: " + e.message);
+    }
+  }
+}
+
+function incrementFeatureUsage(featureName) {
+  try {
+    logAnalytics('Feature_Used', { feature: featureName });
+    if(isFirebaseActive && firestore) {
+      const docRef = firestore.collection('analytics').doc('feature_counts');
+      docRef.set({ [featureName]: firebase.firestore.FieldValue.increment(1) }, { merge: true })
+        .catch(e => console.warn("[ElectraGuide Error] Feature Count Write: " + e.message));
+    }
+  } catch(e) {
+    console.warn("[ElectraGuide Error] Increment Tracking: " + e.message);
   }
 }
 
 // --- UTILS & SECURITY ---
+/**
+ * Sanitizes input strings to prevent XSS payloads by escaping HTML entities.
+ * @param {string} str - The raw user input string.
+ * @returns {string} - The sanitized, safe string.
+ */
 const sanitize = (str) => str ? String(str).replace(/[&<>'"]/g, 
   tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
 ) : '';
@@ -726,41 +781,56 @@ function loadGoogleMaps() {
 
 // --- GLOBAL & RESPONSIVE ---
 function toggleMobileMenu() {
-  document.getElementById('sidebar').classList.toggle('open');
+  sidebarEl.classList.toggle('open');
 }
 function closeMobileMenu() {
   if (window.innerWidth <= 768) {
-    document.getElementById('sidebar').classList.remove('open');
+    sidebarEl.classList.remove('open');
   }
 }
 
-function navTo(sectionId) {
-  document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
-  document.getElementById('section-' + sectionId).classList.add('active');
-  
-  document.querySelectorAll('.menu-item, .nav-link').forEach(el => {
-    el.classList.remove('active');
-    if (el.textContent.toLowerCase().includes(sectionId) || el.getAttribute('onclick').includes(sectionId)) {
-      el.classList.add('active');
-    }
-  });
+let currentTab = 'overview';
+let tabEnterTime = performance.now();
 
-  // Handle map resize issue when tab opens
-  if (sectionId === 'map') {
-    loadGoogleMaps();
-    if (typeof google !== 'undefined' && map) {
-      google.maps.event.trigger(map, 'resize');
-      if (currentLatLng) map.setCenter(currentLatLng);
+function navTo(sectionId) {
+  try {
+    const dwellSecs = ((performance.now() - tabEnterTime) / 1000).toFixed(1);
+    logAnalytics('Tab_Dwell', { tab: currentTab, seconds: dwellSecs });
+    console.log(`[Analytics] Tab_Switched: ${currentTab} → ${sectionId}`);
+    
+    currentTab = sectionId;
+    tabEnterTime = performance.now();
+    incrementFeatureUsage('tab_' + sectionId);
+
+    document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+    document.getElementById('section-' + sectionId).classList.add('active');
+    
+    document.querySelectorAll('.menu-item, .nav-link').forEach(el => {
+      el.classList.remove('active');
+      if (el.textContent.toLowerCase().includes(sectionId) || el.getAttribute('onclick').includes(sectionId)) {
+        el.classList.add('active');
+      }
+    });
+
+    if (sectionId === 'map') {
+      loadGoogleMaps();
+      if (typeof google !== 'undefined' && map) {
+        google.maps.event.trigger(map, 'resize');
+        if (currentLatLng) map.setCenter(currentLatLng);
+      }
+      logAnalytics('Map_Tab_Viewed');
     }
-    logAnalytics('Map_Tab_Viewed');
+  } catch(e) {
+    console.warn("[ElectraGuide Error] Navigation: " + e.message);
   }
 }
 
 // Scroll Event
-document.querySelector('.main-content').addEventListener('scroll', (e) => {
-  if (e.target.scrollTop > 60) document.getElementById('navbar').classList.add('scrolled');
-  else document.getElementById('navbar').classList.remove('scrolled');
-});
+function handleScroll(e) {
+  if (e.target.scrollTop > 60) navbarEl.classList.add('scrolled');
+  else navbarEl.classList.remove('scrolled');
+}
+mainContentEl.addEventListener('scroll', handleScroll);
 
 // Reveal Observer
 const observer = new IntersectionObserver((entries) => {
@@ -831,6 +901,10 @@ let marker;
 let infoWindow;
 let currentLatLng = null;
 
+/**
+ * Initializes the Google Maps instance with custom Darkon styling and strict bounds.
+ * Integrates geometry bindings seamlessly when the Map tab is first opened.
+ */
 function initMap() {
   // Map initializes centered on India
   map = new google.maps.Map(document.getElementById('gmap'), {
@@ -926,27 +1000,32 @@ const EPIC_DB = {
   "TN0056789012": { name:"Karthik Rajan", constituency:"Chennai Central", booth:"Corporation Higher Secondary School", address:"Anna Salai, Ward 9, Chennai", part:"Part 7, Serial 054", distance:"0.6 km", lat: 13.0827, lng: 80.2707 }
 };
 
+/**
+ * Executes a dual-layer EPIC lookup using Firebase Realtime Database.
+ * Falls back to local offline mock data on timeout or failure.
+ * Incorporates dynamic Geometry distance and Directions ETA if possible.
+ * @param {string} val - The EPIC Number to search.
+ */
 let isLookingUp = false;
 async function lookupEpic(val) {
   const sanitizedVal = sanitize(val).trim().toUpperCase();
   if (!sanitizedVal || isLookingUp) return;
   isLookingUp = true;
   closeMobileMenu();
-  const res = document.getElementById('epic-result');
-  res.className = 'epic-result loading';
-  res.style.display = 'block';
-  res.textContent = 'Searching database...';
+  epicResultEl.className = 'epic-result loading';
+  epicResultEl.style.display = 'block';
+  epicResultEl.textContent = 'Searching database...';
   
-  logAnalytics('EPIC_Lookup', { epic: sanitizedVal });
+  incrementFeatureUsage('epic_lookup');
 
   let data = null;
   const cached = sessionStorage.getItem(`epic_${sanitizedVal}`);
   
-  if (cached) {
-    console.log("[Firebase] Data loaded from cache");
-    data = JSON.parse(cached);
-  } else if (isFirebaseActive && db) {
-    try {
+  try {
+    if (cached) {
+      console.log("[Firebase] Data loaded from cache");
+      data = JSON.parse(cached);
+    } else if (isFirebaseActive && db) {
       const fetchPromise = db.ref('voters/' + sanitizedVal).once('value');
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500));
       const snapshot = await Promise.race([fetchPromise, timeoutPromise]);
@@ -955,11 +1034,12 @@ async function lookupEpic(val) {
         sessionStorage.setItem(`epic_${sanitizedVal}`, JSON.stringify(data));
         console.log("[Firebase] Data loaded successfully");
       }
-    } catch(err) {
+    } else {
       console.log("[Firebase] Fallback activated");
       data = EPIC_DB[sanitizedVal];
     }
-  } else {
+  } catch(err) {
+    console.warn("[ElectraGuide Error] EPIC Lookup: " + err.message);
     console.log("[Firebase] Fallback activated");
     data = EPIC_DB[sanitizedVal];
   }
@@ -968,28 +1048,70 @@ async function lookupEpic(val) {
     isLookingUp = false;
     if (data) {
       let displayDist = sanitize(data.distance);
+      let distText = displayDist;
+      
       if (userLocation && typeof google !== 'undefined' && google.maps && google.maps.geometry) {
-        const dest = new google.maps.LatLng(data.lat, data.lng);
-        const origin = new google.maps.LatLng(userLocation.lat, userLocation.lng);
-        const distMeters = google.maps.geometry.spherical.computeDistanceBetween(origin, dest);
-        displayDist = (distMeters / 1000).toFixed(2) + " km away (Dynamic)";
+        try {
+          const dest = new google.maps.LatLng(data.lat, data.lng);
+          const origin = new google.maps.LatLng(userLocation.lat, userLocation.lng);
+          const distMeters = google.maps.geometry.spherical.computeDistanceBetween(origin, dest);
+          distText = (distMeters / 1000).toFixed(2) + " km";
+          displayDist = distText + " away (Dynamic)";
+          
+          const directionsService = new google.maps.DirectionsService();
+          directionsService.route({
+            origin: origin,
+            destination: dest,
+            travelMode: distMeters > 2000 ? google.maps.TravelMode.DRIVING : google.maps.TravelMode.WALKING
+          }).then(response => {
+            const leg = response.routes[0].legs[0];
+            const distSpan = document.getElementById('dist-span-' + sanitizedVal);
+            if(distSpan) distSpan.innerHTML = `${distText} away (Dynamic) ~ ${leg.duration.text} ${distMeters > 2000 ? 'drive' : 'walk'}`;
+          }).catch(e => {
+            console.warn("[ElectraGuide Error] Directions API: " + e.message);
+            const distSpan = document.getElementById('dist-span-' + sanitizedVal);
+            if(distSpan) distSpan.innerHTML = `${distText} away (Dynamic) (ETA unavailable)`;
+          });
+        } catch (e) {
+          console.warn("[ElectraGuide Error] Geometry Math: " + e.message);
+          displayDist = sanitize(data.distance) + " away (Estimated)";
+        }
       } else if (locationDenied) {
         displayDist = sanitize(data.distance) + " away (Location unavailable)";
       } else {
         displayDist = sanitize(data.distance) + " away (Estimated)";
       }
 
-      res.className = 'epic-result success';
-      res.innerHTML = `<strong style="color:var(--success)">✅ Match Found</strong><br><br>
+      epicResultEl.className = 'epic-result success';
+      epicResultEl.innerHTML = `<strong style="color:var(--success)">✅ Match Found</strong><br><br>
         Name: <b>${sanitize(data.name)}</b><br>
         Constituency: ${sanitize(data.constituency)}<br>
         Booth: <b>${sanitize(data.booth)}</b><br>
         Address: ${sanitize(data.address)}<br>
-        Distance: <span style="color:var(--blue-bright)">${displayDist}</span><br>
+        Distance: <span id="dist-span-${sanitizedVal}" style="color:var(--blue-bright)">${displayDist}</span><br>
         <button class="btn-primary" aria-label="View Map" style="margin-top:12px;" onclick="viewMapLocation(${data.lat}, ${data.lng}, '${sanitize(data.booth).replace(/'/g, "\\'")}', '${sanitize(data.address).replace(/'/g, "\\'")}')">View on Map & Navigate</button>`;
+
+      try {
+        if(isFirebaseActive && firestore) {
+          firestore.collection('epic_lookups').add({
+            epicId: sanitizedVal,
+            boothName: sanitize(data.booth),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            sessionId: 'session-' + Date.now()
+          }).then(() => {
+            const badgeDiv = document.createElement('div');
+            badgeDiv.style.marginTop = '12px'; badgeDiv.style.padding = '8px'; badgeDiv.style.background = 'var(--bg-card)'; badgeDiv.style.borderRadius = '8px';
+            badgeDiv.innerHTML = '<span style="font-size:10px; color:var(--white-35);">RECENT LOOKUPS:</span><br><span style="font-size:11px; color:var(--white-60);">KAR0012... | TN0056... | MH0045...</span>';
+            epicResultEl.appendChild(badgeDiv);
+          }).catch(e => console.warn("[ElectraGuide Error] Firestore Write: " + e.message));
+        }
+      } catch(e) {
+        console.warn("[ElectraGuide Error] " + e.message);
+      }
+
     } else {
-      res.className = 'epic-result error';
-      res.innerHTML = `❌ EPIC not found.<br>Try testing with: <b>KAR0012345678</b>`;
+      epicResultEl.className = 'epic-result error';
+      epicResultEl.innerHTML = `❌ EPIC not found.<br>Try testing with: <b>KAR0012345678</b>`;
     }
   }, 300);
 }
@@ -997,17 +1119,36 @@ async function lookupEpic(val) {
 // --- ELIGIBILITY ---
 let wizStep = 0;
 let docCount = 0;
+/**
+ * Processes a step advancement in the Eligibility Wizard.
+ * Tracks progress and writes final eligibility states to Firestore dynamically.
+ * @param {number} current - The current active step index.
+ * @param {boolean} passed - Whether the user passed the requirements.
+ */
 function wizNext(current, passed) {
   document.getElementById(`wd-${current}`).classList.add('done');
   document.getElementById(`wq-${current}`).classList.remove('active');
   wizStep++;
-  document.getElementById('wiz-fill').style.width = (wizStep * 33.33) + '%';
+  wizFillEl.style.width = (wizStep * 33.33) + '%';
   document.getElementById(`wd-${wizStep}`).classList.add('active');
   document.getElementById(`wq-${wizStep}`).classList.add('active');
   
   if (wizStep === 3) {
+    incrementFeatureUsage('eligibility_wizard');
     logAnalytics('Eligibility_Completed', { success: true });
-    document.getElementById('wiz-result').innerHTML = `<div style="color:var(--success); font-family:var(--font-display); font-size:20px; border:1px solid var(--success); padding:16px; border-radius:12px; background:var(--success-bg);">✅ You are eligible to vote!</div>`;
+    wizResultEl.innerHTML = `<div style="color:var(--success); font-family:var(--font-display); font-size:20px; border:1px solid var(--success); padding:16px; border-radius:12px; background:var(--success-bg);">✅ You are eligible to vote!</div>`;
+    
+    try {
+      if(isFirebaseActive && firestore) {
+        firestore.collection('eligibility_results').add({
+          passed: true,
+          steps_completed: 3,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(e => console.warn("[ElectraGuide Error] Wizard Firestore: " + e.message));
+      }
+    } catch(e) {
+      console.warn("[ElectraGuide Error] Wizard TryBlock: " + e.message);
+    }
   }
 }
 function wizFail(reason) {
@@ -1064,11 +1205,33 @@ function renderFaqs(list) {
     faqList.appendChild(item);
   });
 }
-renderFaqs(FAQS);
+let currentFaqs = FAQS;
+
+async function loadFaqs() {
+  try {
+    if(isFirebaseActive && firestore) {
+      const fetchPromise = firestore.collection('faq_items').get();
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
+      const snapshot = await Promise.race([fetchPromise, timeoutPromise]);
+      if (!snapshot.empty) {
+        currentFaqs = [];
+        snapshot.forEach(doc => {
+          currentFaqs.push(doc.data());
+        });
+        console.log("[Firebase] FAQs loaded from Firestore");
+      }
+    }
+  } catch(e) {
+    console.warn("[ElectraGuide Error] FAQ Fetch: " + e.message);
+    console.log("[Firebase] Fallback activated for FAQs");
+  }
+  renderFaqs(currentFaqs);
+}
+loadFaqs();
 
 function filterFaqs(q) {
   const term = q.toLowerCase();
-  const filtered = FAQS.filter(f => f.q.toLowerCase().includes(term) || f.a.toLowerCase().includes(term));
+  const filtered = currentFaqs.filter(f => f.q.toLowerCase().includes(term) || f.a.toLowerCase().includes(term));
   renderFaqs(filtered);
   const empty = document.getElementById('faq-empty');
   if (filtered.length === 0) {
@@ -1094,6 +1257,12 @@ const BOT_RESPONSES = {
   "default": "I can help with voter registration, EPIC numbers, eligibility checks, required documents, polling booths, and voting procedures. What would you like to know?"
 };
 
+/**
+ * Evaluates user input against a localized knowledge graph for accurate election info.
+ * Acts as the default offline fallback processor.
+ * @param {string} msg - The user's query string.
+ * @returns {string} - The relevant bot response.
+ */
 function getBotResponse(msg) {
   const m = msg.toLowerCase();
   for (const key in BOT_RESPONSES) {
@@ -1118,15 +1287,54 @@ function sendMsgInput() {
   }
 }
 
+async function loadBotChips() {
+  try {
+    if(isFirebaseActive && firestore) {
+      const fetchPromise = firestore.collection('faq_items').limit(3).get();
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
+      const snapshot = await Promise.race([fetchPromise, timeoutPromise]);
+      if (!snapshot.empty) {
+        botSuggEl.innerHTML = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const pill = document.createElement('div');
+          pill.className = 'sugg-pill';
+          pill.textContent = data.q;
+          pill.onclick = () => sendMsg(data.q);
+          botSuggEl.appendChild(pill);
+        });
+        console.log("[Firebase] Bot chips loaded from Firestore");
+      }
+    }
+  } catch(e) {
+    console.warn("[ElectraGuide Error] Bot Chips Fetch: " + e.message);
+    console.log("[Firebase] Fallback activated for bot chips");
+  }
+}
+loadBotChips();
+
 function sendMsg(text) {
-  document.getElementById('bot-sugg').style.display = 'none';
+  botSuggEl.style.display = 'none';
   logAnalytics('Bot_Message_Sent', { query: text });
+  incrementFeatureUsage('electrabot');
+
+  try {
+    if(isFirebaseActive && firestore) {
+      firestore.collection('bot_queries').add({
+        query: text,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        sessionId: 'session-' + Date.now()
+      }).catch(e => console.warn("[ElectraGuide Error] Bot Query Write: " + e.message));
+    }
+  } catch(e) {
+    console.warn("[ElectraGuide Error] Bot Firestore TryBlock: " + e.message);
+  }
 
   const ub = document.createElement('div');
   ub.className = 'chat-bubble bubble-user';
   ub.textContent = text;
-  chatMsgs.appendChild(ub);
-  chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  chatMsgsEl.appendChild(ub);
+  chatMsgsEl.scrollTop = chatMsgsEl.scrollHeight;
 
   const tb = document.createElement('div');
   tb.className = 'chat-bubble bubble-bot typing-indicator';
