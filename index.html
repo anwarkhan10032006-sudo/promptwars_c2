@@ -689,7 +689,8 @@ try {
 }
 
 function logAnalytics(eventName, params = {}) {
-  console.log(`[Analytics] ${eventName} Triggered`, params);
+  let prettyName = eventName.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  console.log(`[Analytics] ${prettyName} Triggered`, params);
   if(isFirebaseActive && analytics) {
     analytics.logEvent(eventName, params);
   }
@@ -701,12 +702,15 @@ const sanitize = (str) => str ? String(str).replace(/[&<>'"]/g,
 ) : '';
 
 let userLocation = null;
+let locationDenied = false;
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
     pos => { userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; },
-    err => { console.warn("Geolocation denied or failed.", err); },
+    err => { locationDenied = true; console.warn("Geolocation denied or failed.", err); },
     { timeout: 5000, maximumAge: 60000 }
   );
+} else {
+  locationDenied = true;
 }
 
 let mapLoaded = false;
@@ -748,7 +752,7 @@ function navTo(sectionId) {
       google.maps.event.trigger(map, 'resize');
       if (currentLatLng) map.setCenter(currentLatLng);
     }
-    logAnalytics('map_tab_viewed');
+    logAnalytics('Map_Tab_Viewed');
   }
 }
 
@@ -906,7 +910,7 @@ function getDirections(destLat, destLng) {
 
 function requestDirectionsGlobal() {
   if (currentLatLng) {
-    logAnalytics('map_navigation_clicked', { lat: currentLatLng.lat, lng: currentLatLng.lng });
+    logAnalytics('Navigation_Started', { lat: currentLatLng.lat, lng: currentLatLng.lng });
     getDirections(currentLatLng.lat, currentLatLng.lng);
   } else {
     alert('Please select a polling station first.');
@@ -933,12 +937,13 @@ async function lookupEpic(val) {
   res.style.display = 'block';
   res.textContent = 'Searching database...';
   
-  logAnalytics('epic_lookup', { epic: sanitizedVal });
+  logAnalytics('EPIC_Lookup', { epic: sanitizedVal });
 
   let data = null;
   const cached = sessionStorage.getItem(`epic_${sanitizedVal}`);
   
   if (cached) {
+    console.log("[Firebase] Data loaded from cache");
     data = JSON.parse(cached);
   } else if (isFirebaseActive && db) {
     try {
@@ -946,12 +951,16 @@ async function lookupEpic(val) {
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500));
       const snapshot = await Promise.race([fetchPromise, timeoutPromise]);
       data = snapshot.val();
-      if(data) sessionStorage.setItem(`epic_${sanitizedVal}`, JSON.stringify(data));
+      if(data) {
+        sessionStorage.setItem(`epic_${sanitizedVal}`, JSON.stringify(data));
+        console.log("[Firebase] Data loaded successfully");
+      }
     } catch(err) {
-      console.warn("Firebase fetch failed or timed out. Falling back to local DB.");
+      console.log("[Firebase] Fallback activated");
       data = EPIC_DB[sanitizedVal];
     }
   } else {
+    console.log("[Firebase] Fallback activated");
     data = EPIC_DB[sanitizedVal];
   }
   
@@ -963,7 +972,11 @@ async function lookupEpic(val) {
         const dest = new google.maps.LatLng(data.lat, data.lng);
         const origin = new google.maps.LatLng(userLocation.lat, userLocation.lng);
         const distMeters = google.maps.geometry.spherical.computeDistanceBetween(origin, dest);
-        displayDist = (distMeters / 1000).toFixed(2) + " km (Dynamic)";
+        displayDist = (distMeters / 1000).toFixed(2) + " km away (Dynamic)";
+      } else if (locationDenied) {
+        displayDist = sanitize(data.distance) + " away (Location unavailable)";
+      } else {
+        displayDist = sanitize(data.distance) + " away (Estimated)";
       }
 
       res.className = 'epic-result success';
@@ -993,7 +1006,7 @@ function wizNext(current, passed) {
   document.getElementById(`wq-${wizStep}`).classList.add('active');
   
   if (wizStep === 3) {
-    logAnalytics('eligibility_completed', { success: true });
+    logAnalytics('Eligibility_Completed', { success: true });
     document.getElementById('wiz-result').innerHTML = `<div style="color:var(--success); font-family:var(--font-display); font-size:20px; border:1px solid var(--success); padding:16px; border-radius:12px; background:var(--success-bg);">✅ You are eligible to vote!</div>`;
   }
 }
@@ -1107,7 +1120,7 @@ function sendMsgInput() {
 
 function sendMsg(text) {
   document.getElementById('bot-sugg').style.display = 'none';
-  logAnalytics('bot_message_sent', { query: text });
+  logAnalytics('Bot_Message_Sent', { query: text });
 
   const ub = document.createElement('div');
   ub.className = 'chat-bubble bubble-user';
