@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantix — Advanced AI Automation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap');
+        @import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
+
+        :root {
+            --bg-base: #05030f;
+            --bg-surface: #0d0820;
+            --bg-card: rgba(255,255,255,0.03);
+            --bg-card-hover: rgba(255,255,255,0.055);
+            --border: rgba(139,92,246,0.18);
+            --border-hover: rgba(139,92,246,0.4);
+            --purple-core: #7c3aed;
+            --purple-bright: #a855f7;
+            --purple-soft: #c084fc;
+            --purple-glow: rgba(124,58,237,0.35);
+            --white: #ffffff;
+            --white-80: rgba(255,255,255,0.8);
+            --white-50: rgba(255,255,255,0.5);
+            --white-20: rgba(255,255,255,0.2);
+            --text-primary: #f0ebff;
+            --text-secondary: rgba(240,235,255,0.6);
+            --text-muted: rgba(240,235,255,0.35);
+            --font-display: 'Clash Display', sans-serif;
+            --font-body: 'Outfit', sans-serif;
+            --radius-sm: 10px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-xl: 32px;
+            --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        h1, h2, h3, h4, h5, h6, .clash-display {
+            font-family: var(--font-display);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--purple-core);
+            border-radius: 4px;
+        }
+
+        /* Ambient Background Orbs */
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            filter: blur(80px);
+        }
+        .orb-1 {
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 600px;
+            background: radial-gradient(ellipse, var(--purple-core) 0%, transparent 70%);
+            opacity: 0.15;
+        }
+        .orb-2 {
+            top: 60%;
+            left: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(ellipse, var(--purple-soft) 0%, transparent 70%);
+            opacity: 0.08;
+        }
+        .orb-3 {
+            top: 40%;
+            right: -150px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(ellipse, #4f46e5 0%, transparent 70%);
+            opacity: 0.07;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+            transform: scale(1);
+        }
+        .btn:active {
+            transform: scale(0.98) !important;
+        }
+        .btn-primary {
+            background: var(--purple-core);
+            color: var(--white);
+            border: 1px solid transparent;
+        }
+        .btn-primary:hover {
+            background: var(--purple-bright);
+            box-shadow: 0 0 30px rgba(124,58,237,0.6), 0 0 60px rgba(124,58,237,0.2);
+            transform: scale(1.03);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--white-20);
+        }
+        .btn-outline:hover {
+            border-color: rgba(139,92,246,0.6);
+        }
+
+        /* Reveal Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            backdrop-filter: blur(20px);
+            background: rgba(5,3,15,0.7);
+            border-bottom: 1px solid rgba(139,92,246,0.12);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+        .navbar.scrolled {
+            backdrop-filter: blur(40px);
+            background: rgba(5,3,15,0.85);
+            border-bottom: 1px solid rgba(139,92,246,0.25);
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .nav-logo svg {
+            width: 24px;
+            height: 24px;
+        }
+        .nav-logo span {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--white);
+        }
+        .nav-links {
+            display: flex;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(139,92,246,0.2);
+            border-radius: 50px;
+            padding: 6px 8px;
+            gap: 4px;
+        }
+        .nav-link {
+            text-decoration: none;
+            color: var(--white-50);
+            font-size: 14px;
+            padding: 6px 16px;
+            border-radius: 50px;
+            transition: var(--transition);
+            position: relative;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0%;
+            height: 1px;
+            background: var(--purple-bright);
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover {
+            color: var(--white);
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        .nav-link.active {
+            color: var(--white);
+            background: rgba(255,255,255,0.08);
+        }
+        .nav-link.active::after {
+            display: none;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 24px 60px;
+            text-align: center;
+            z-index: 10;
+        }
+        .hero-glow-1 {
+            position: absolute;
+            width: 800px;
+            height: 500px;
+            background: radial-gradient(ellipse at 50% 60%, rgba(124,58,237,0.22) 0%, transparent 70%);
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+        .hero-glow-2 {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(ellipse at 50% 30%, rgba(168,85,247,0.12) 0%, transparent 60%);
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(139,92,246,0.4);
+            background: rgba(124,58,237,0.12);
+            border-radius: 50px;
+            padding: 5px 14px;
+            font-size: 12px;
+            color: var(--purple-soft);
+            margin-bottom: 24px;
+            animation: badgeFade 1s ease forwards;
+        }
+        @keyframes badgeFade {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .badge svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--purple-soft);
+        }
+        .hero h1 {
+            font-size: clamp(42px, 6vw, 76px);
+            font-weight: 700;
+            line-height: 1.08;
+            color: var(--white);
+            max-width: 900px;
+            margin-bottom: 24px;
+        }
+        .hero p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 480px;
+            line-height: 1.7;
+            margin-bottom: 40px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hero-cta {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        /* Dashboard Preview Card */
+        .dashboard-preview {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 48px;
+            background: rgba(13,8,32,0.8);
+            border: 1px solid rgba(139,92,246,0.2);
+            border-radius: var(--radius-xl);
+            backdrop-filter: blur(40px);
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: dashFade 1s 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            text-align: left;
+        }
+        @keyframes dashFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dash-logo svg {
+            width: 20px;
+            height: 20px;
+        }
+        .dash-search {
+            background: rgba(255,255,255,0.06);
+            border-radius: 50px;
+            padding: 8px 16px;
+            width: 240px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dash-search div {
+            width: 12px;
+            height: 12px;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 50%;
+        }
+        .dash-user {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            color: var(--white);
+        }
+        .dash-user-icons {
+            display: flex;
+            gap: 12px;
+        }
+        .dash-icon {
+            width: 20px;
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        .dash-body {
+            display: flex;
+            gap: 24px;
+        }
+        .dash-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 48px;
+            align-items: center;
+        }
+        .sidebar-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+        }
+        .sidebar-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--purple-core);
+            border-radius: 50%;
+            margin-bottom: 16px;
+        }
+
+        .dash-main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: slideUp 0.6s 0.7s backwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .dash-main-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            color: var(--white);
+        }
+        .dash-tabs {
+            display: flex;
+            gap: 8px;
+        }
+        .dash-tab {
+            font-size: 11px;
+            padding: 4px 12px;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+        }
+        .dash-tab.active {
+            background: var(--purple-core);
+            color: var(--white);
+        }
+        .dash-chart-area {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            flex-grow: 1;
+        }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 24px;
+            color: var(--white);
+        }
+        .chart-grid {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 120px;
+            position: relative;
+        }
+        .y-axis {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            font-size: 10px;
+            color: var(--text-muted);
+            padding-right: 12px;
+        }
+        .bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            flex-grow: 1;
+            height: 100%;
+        }
+        .bar-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            height: 100%;
+            justify-content: flex-end;
+        }
+        .bar {
+            width: 16px;
+            background: rgba(139,92,246,0.3);
+            border-radius: 4px 4px 0 0;
+        }
+        .bar.active {
+            background: var(--purple-bright);
+            position: relative;
+            animation: pulse-bar 2s infinite;
+        }
+        @keyframes pulse-bar {
+            0%, 100% { box-shadow: 0 0 10px rgba(168,85,247,0.4); }
+            50% { box-shadow: 0 0 24px rgba(168,85,247,0.8); }
+        }
+        .bar-tooltip {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--purple-core);
+            color: var(--white);
+            font-size: 10px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+        .bar-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 4px;
+            border-style: solid;
+            border-color: var(--purple-core) transparent transparent transparent;
+        }
+        .x-label {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .dash-right {
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: slideUp 0.6s 0.8s backwards;
+        }
+        .dash-card {
+            background: linear-gradient(135deg, #4c1d95, #7c3aed);
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+        .dash-card-title { font-size: 11px; opacity: 0.8; margin-bottom: 8px; }
+        .dash-card-val { font-size: 20px; font-weight: 700; margin-bottom: 16px; font-family: var(--font-display); }
+        .dash-card-num { font-size: 10px; font-family: monospace; letter-spacing: 1px; opacity: 0.7; }
+        .dash-card-icon {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            border-top-color: transparent;
+            transform: rotate(45deg);
+        }
+        .transactions {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            flex-grow: 1;
+        }
+        .trx-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+        }
+        .trx-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .trx-avatar {
+            width: 24px;
+            height: 24px;
+            background: var(--purple-soft);
+            border-radius: 50%;
+        }
+        .trx-name { font-size: 11px; color: var(--text-secondary); }
+        .trx-amt { font-size: 11px; color: var(--white); font-weight: 600; }
+
+        /* Social Proof / Logo Strip */
+        .social-proof {
+            padding: 48px 0;
+            text-align: center;
+            overflow: hidden;
+        }
+        .social-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            margin-bottom: 32px;
+        }
+        .logo-strip {
+            display: flex;
+            width: max-content;
+            animation: scroll-left linear 20s infinite;
+        }
+        .logo-strip:hover {
+            animation-play-state: paused;
+        }
+        @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .logo-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 40px;
+            opacity: 0.35;
+            transition: opacity 0.3s ease;
+        }
+        .logo-item:hover {
+            opacity: 0.7;
+        }
+        .logo-item svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+        .logo-item span {
+            font-size: 20px;
+            font-weight: 600;
+            font-family: var(--font-display);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .features h2 {
+            font-size: clamp(34px, 4vw, 52px);
+            max-width: 600px;
+            margin: 0 auto 16px;
+        }
+        .features > p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            max-width: 520px;
+            margin: 0 auto 48px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            text-align: left;
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Spotlight effect */
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: var(--my, -1000px);
+            left: var(--mx, -1000px);
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+        .feature-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(139,92,246,0.15);
+        }
+        
+        .card-wide {
+            grid-column: span 1.5; /* Note: requires custom layout if using grid template columns. Handled below. */
+        }
+        .card-ill {
+            height: 180px;
+            background: #0d0820;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-content {
+            z-index: 1;
+        }
+        .feature-card h3 {
+            font-size: 15px;
+            color: var(--white);
+            margin-bottom: 8px;
+            font-family: var(--font-display);
+        }
+        .feature-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Specific Illustrations */
+        .ill-1 .hex {
+            width: 56px;
+            height: 56px;
+            background: var(--purple-core);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            box-shadow: 0 0 40px rgba(124,58,237,0.6);
+            position: relative;
+            z-index: 2;
+        }
+        .ill-1 .dots {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        .ill-1 .dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: var(--purple-soft);
+            border-radius: 50%;
+        }
+        .ill-1 .line {
+            position: absolute;
+            background: rgba(139,92,246,0.3);
+            transform-origin: 0 50%;
+            height: 1px;
+        }
+
+        .ill-2 .avatars {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .ill-2 .av {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .ill-2 .bot {
+            background: var(--purple-core);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            z-index: 2;
+            box-shadow: 0 0 20px rgba(124,58,237,0.5);
+        }
+        .ill-2 .dash-line {
+            width: 30px;
+            height: 2px;
+            background: transparent;
+            border-top: 2px dashed rgba(139,92,246,0.5);
+        }
+
+        .ill-3 svg {
+            width: 100%;
+            height: 100%;
+            fill: none;
+            stroke: var(--purple-core);
+            stroke-width: 2;
+        }
+
+        .ill-4 .audio-bars {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 100%;
+        }
+        .ill-4 .abar {
+            width: 4px;
+            background: var(--purple-core);
+            border-radius: 2px;
+            animation: pulse-height 1s infinite alternate;
+        }
+        @keyframes pulse-height {
+            0% { height: 10px; opacity: 0.5; }
+            100% { height: 60px; opacity: 1; }
+        }
+        .ill-4 .center-bar {
+            width: 40px;
+            height: 40px;
+            background: var(--purple-core);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(124,58,237,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+        
+        .ill-5 .f-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            height: 100px;
+        }
+        .ill-5 .fb {
+            width: 20px;
+            background: rgba(139,92,246,0.2);
+            border-radius: 4px 4px 0 0;
+        }
+        .ill-5 .fb.active {
+            background: var(--purple-bright);
+            position: relative;
+        }
+        .ill-5 .ttip {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--white);
+            color: var(--bg-base);
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* Bottom cards placement */
+        .bottom-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hero h1 { font-size: 36px; }
+            .dash-sidebar { display: none; }
+            .dash-right { display: none; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .bottom-cards { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .hero-cta { flex-direction: column; }
+            .features { padding: 60px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Atmosphere Orbs -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="nav-logo">
+            <svg viewBox="0 0 24 24" fill="url(#grad1)">
+                <defs>
+                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:var(--purple-bright);stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:var(--purple-core);stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            <span>Quantix</span>
+        </a>
+        <div class="nav-links">
+            <a href="#" class="nav-link active">Home</a>
+            <a href="#" class="nav-link">About</a>
+            <a href="#" class="nav-link">Feature</a>
+            <a href="#" class="nav-link">Pricing</a>
+            <a href="#" class="nav-link">Integration</a>
+            <a href="#" class="nav-link">Blog</a>
+        </div>
+        <a href="#" class="btn btn-primary">Contact &rarr;</a>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-glow-1"></div>
+        <div class="hero-glow-2"></div>
+        
+        <div class="badge reveal">
+            <svg viewBox="0 0 24 24"><path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z"/></svg>
+            Optimize Your Workflow
+        </div>
+        
+        <h1 class="reveal" style="transition-delay: 0.1s;">Elevate Your Business Using<br>AI-Driven Automation</h1>
+        <p class="reveal" style="transition-delay: 0.2s;">An innovative software platform that simplifies your tasks, enhances efficiency, and helps your business grow seamlessly.</p>
+        
+        <div class="hero-cta reveal" style="transition-delay: 0.3s;">
+            <a href="#" class="btn btn-primary">Start Free Trial &rarr;</a>
+            <a href="#" class="btn btn-outline">Book a Demo &rarr;</a>
+        </div>
+
+        <!-- Dashboard UI -->
+        <div class="dashboard-preview">
+            <div class="dash-header">
+                <div class="dash-logo">
+                    <svg viewBox="0 0 24 24" fill="var(--white)"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
+                </div>
+                <div class="dash-search">
+                    <div></div> <span style="font-size:12px;color:var(--white-50)">Search...</span>
+                </div>
+                <div class="dash-user">
+                    <span>Hi David! 👋</span>
+                    <div class="dash-user-icons">
+                        <div class="dash-icon"></div>
+                        <div class="dash-icon"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash-body">
+                <div class="dash-sidebar">
+                    <div class="sidebar-avatar"></div>
+                    <div class="sidebar-icon"></div>
+                    <div class="sidebar-icon"></div>
+                    <div class="sidebar-icon"></div>
+                </div>
+
+                <div class="dash-main">
+                    <div class="dash-main-title">My Dashboard</div>
+                    <div class="dash-tabs">
+                        <div class="dash-tab active">All</div>
+                        <div class="dash-tab">Withdrawal</div>
+                        <div class="dash-tab">Savings</div>
+                        <div class="dash-tab">Deposit</div>
+                    </div>
+                    <div class="dash-chart-area">
+                        <div class="chart-header">
+                            <span>Revenue Flow</span>
+                            <span style="color:var(--purple-bright);cursor:pointer;">View all &rarr;</span>
+                        </div>
+                        <div class="chart-grid">
+                            <div class="y-axis">
+                                <span>3.0k</span><span>2.0k</span><span>1.0k</span><span>0</span>
+                            </div>
+                            <div class="bars">
+                                <div class="bar-col"><div class="bar" style="height:30%"></div><span class="x-label">Jun</span></div>
+                                <div class="bar-col"><div class="bar" style="height:50%"></div><span class="x-label">Jul</span></div>
+                                <div class="bar-col"><div class="bar" style="height:40%"></div><span class="x-label">Aug</span></div>
+                                <div class="bar-col"><div class="bar" style="height:70%"></div><span class="x-label">Sep</span></div>
+                                <div class="bar-col">
+                                    <div class="bar active" style="height:90%">
+                                        <div class="bar-tooltip">+$32.45</div>
+                                    </div>
+                                    <span class="x-label" style="color:var(--white)">Oct</span>
+                                </div>
+                                <div class="bar-col"><div class="bar" style="height:60%"></div><span class="x-label">Nov</span></div>
+                                <div class="bar-col"><div class="bar" style="height:80%"></div><span class="x-label">Dec</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dash-right">
+                    <div class="dash-card">
+                        <div class="dash-card-icon"></div>
+                        <div class="dash-card-title">Revenue Flow</div>
+                        <div class="dash-card-val">$456,000</div>
+                        <div class="dash-card-num">4580 3332 0320 1894</div>
+                    </div>
+                    <div class="transactions">
+                        <div class="chart-header" style="margin-bottom:12px;">
+                            <span>Transactions</span>
+                            <span style="color:var(--purple-bright);cursor:pointer;font-size:10px;">View all &rarr;</span>
+                        </div>
+                        <div class="trx-row">
+                            <div class="trx-left">
+                                <div class="trx-avatar"></div>
+                                <div class="trx-name">@heridady</div>
+                            </div>
+                            <div class="trx-amt">$1,400</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof -->
+    <section class="social-proof reveal">
+        <div class="social-label">TRUSTED BY 10,000+ TEAMS WORLDWIDE</div>
+        <div class="logo-strip">
+            <!-- Double for seamless marquee -->
+            <div style="display:flex;">
+                <div class="logo-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg><span>Logoipsum</span></div>
+                <div class="logo-item"><svg viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2"/></svg><span>IPSUM</span></div>
+                <div class="logo-item"><svg viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg><span>LOCCO</span></div>
+                <div class="logo-item"><svg viewBox="0 0 24 24"><path d="M2 12l10-10 10 10-10 10z"/></svg><span>Logoip</span></div>
+                <div class="logo-item"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="6"/><circle cx="16" cy="12" r="6"/></svg><span>Nexus</span></div>
+                <div class="logo-item"><svg viewBox="0 0 24 24"><rect width="24" height="8" y="8"/></svg><span>Aura</span></div>
+            </div>
+            <div style="display:flex;">
+                <div class="logo-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg><span>Logoipsum</span></div>
+                <div class="logo-item"><svg viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2"/></svg><span>IPSUM</span></div>
+                <div class="logo-item"><svg viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg><span>LOCCO</span></div>
+                <div class="logo-item"><svg viewBox="0 0 24 24"><path d="M2 12l10-10 10 10-10 10z"/></svg><span>Logoip</span></div>
+                <div class="logo-item"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="6"/><circle cx="16" cy="12" r="6"/></svg><span>Nexus</span></div>
+                <div class="logo-item"><svg viewBox="0 0 24 24"><rect width="24" height="8" y="8"/></svg><span>Aura</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+        <div class="badge reveal">
+            — Features —
+        </div>
+        <h2 class="reveal">Accelerate your setup using streamlined low-code processes.</h2>
+        <p class="reveal">All the tools you need to optimize operations, enhance productivity, and grow confidently. Fueled by AI for intelligent expansion.</p>
+
+        <div class="feature-grid">
+            <div class="feature-card reveal" style="transition-delay: 0.1s;">
+                <div class="card-ill ill-1">
+                    <div class="hex"></div>
+                    <div class="dots">
+                        <div class="dot" style="top:20%;left:20%"></div>
+                        <div class="dot" style="top:80%;left:30%"></div>
+                        <div class="dot" style="top:50%;left:80%"></div>
+                        <div class="line" style="top:50%;left:50%;width:60px;transform:rotate(-45deg)"></div>
+                        <div class="line" style="top:50%;left:50%;width:80px;transform:rotate(15deg)"></div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <h3>Quantix AI Solutions</h3>
+                    <p>AI-powered task management for streamlined and effective workflows.</p>
+                </div>
+            </div>
+
+            <div class="feature-card reveal" style="transition-delay: 0.2s;">
+                <div class="card-ill ill-2">
+                    <div class="avatars">
+                        <div class="av"></div>
+                        <div class="dash-line"></div>
+                        <div class="av bot">🤖</div>
+                        <div class="dash-line"></div>
+                        <div class="av"></div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <h3>Custom Support Solutions</h3>
+                    <p>Many tasks are now automated, allowing our users to work more effectively.</p>
+                </div>
+            </div>
+
+            <div class="feature-card reveal" style="transition-delay: 0.3s;">
+                <div class="card-ill ill-3">
+                    <svg viewBox="0 0 100 50" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="gradPath" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="var(--purple-core)" stop-opacity="0.4"/>
+                                <stop offset="100%" stop-color="var(--purple-core)" stop-opacity="0"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M0 40 Q 20 10, 40 30 T 80 20 T 100 35 L 100 50 L 0 50 Z" fill="url(#gradPath)" stroke="none"/>
+                        <path d="M0 40 Q 20 10, 40 30 T 80 20 T 100 35"/>
+                    </svg>
+                </div>
+                <div class="card-content">
+                    <h3>Data Integration Made Easy</h3>
+                    <p>Easily connect your credit cards, loans, investments, and bank accounts.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bottom-cards">
+            <div class="feature-card reveal" style="transition-delay: 0.4s;">
+                <div class="card-ill ill-4">
+                    <div class="audio-bars">
+                        <div class="abar" style="animation-delay: 0.1s"></div>
+                        <div class="abar" style="animation-delay: 0.3s"></div>
+                        <div class="abar" style="animation-delay: 0.5s"></div>
+                        <div class="abar" style="animation-delay: 0.2s"></div>
+                        <div class="center-bar">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+                        </div>
+                        <div class="abar" style="animation-delay: 0.4s"></div>
+                        <div class="abar" style="animation-delay: 0.6s"></div>
+                        <div class="abar" style="animation-delay: 0.1s"></div>
+                        <div class="abar" style="animation-delay: 0.3s"></div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <h3>Intelligent Automation</h3>
+                    <p>Harnessing AI to create workflows that simplify tasks and boost productivity.</p>
+                </div>
+            </div>
+
+            <div class="feature-card reveal" style="transition-delay: 0.5s;">
+                <div class="card-ill ill-5">
+                    <div class="f-chart">
+                        <div class="fb" style="height:30%"></div>
+                        <div class="fb" style="height:50%"></div>
+                        <div class="fb" style="height:40%"></div>
+                        <div class="fb" style="height:70%"></div>
+                        <div class="fb active" style="height:90%">
+                            <div class="ttip">+$41,493</div>
+                        </div>
+                        <div class="fb" style="height:60%"></div>
+                        <div class="fb" style="height:80%"></div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <h3>Data Visualization</h3>
+                    <p>Effortlessly visualize and organize complex datasets for clearer insights and quicker decisions.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="reveal" style="margin-top: 40px; transition-delay: 0.6s;">
+            <a href="#" class="btn btn-primary">Explore Features &rarr;</a>
+        </div>
+    </section>
+
+    <script>
+        // Navbar Scroll Effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 80) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Intersection Observer for Reveal Animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // Feature Card Spotlight Mouse Tracker
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mx', `${x}px`);
+                card.style.setProperty('--my', `${y}px`);
+            });
+        });
+    </script>
+</body>
+</html>

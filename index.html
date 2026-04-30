@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ElectraGuide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Syne:wght@600;700;800&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #080810;
+  color: #f0ebff;
+  font-family: 'DM Sans', sans-serif;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+:root {
+  --bg: #080810;
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.08);
+  --border-blue: rgba(37,99,235,0.45);
+  --blue: #2563eb;
+  --blue-bright: #3b82f6;
+  --blue-glow: rgba(37,99,235,0.3);
+  --white: #ffffff;
+  --white-60: rgba(255,255,255,0.6);
+  --white-35: rgba(255,255,255,0.35);
+  --success: #16a34a;
+  --success-bg: rgba(22,163,74,0.12);
+  --error: #dc2626;
+  --error-bg: rgba(220,38,38,0.1);
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --r: 12px;
+  --r-lg: 20px;
+  --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Ambient Orbs */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  background: 
+    radial-gradient(ellipse 800px 500px at 50% -10%, rgba(37,99,235,0.14) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at -10% 100%, rgba(37,99,235,0.07) 0%, transparent 60%);
+  z-index: -1;
+}
+
+/* Navigation Bar */
+nav.top-bar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 60px;
+  background: rgba(8,8,16,0.85);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(37,99,235,0.12);
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 24px; z-index: 100;
+  transition: var(--transition);
+}
+nav.top-bar.scrolled {
+  border-bottom-color: rgba(37,99,235,0.3);
+}
+.nav-logo {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 18px; color: var(--blue);
+}
+.nav-links {
+  display: flex; gap: 8px;
+}
+.nav-link {
+  font-family: var(--font-body); font-size: 14px;
+  color: var(--white-60); text-decoration: none;
+  padding: 5px 14px; border-radius: 6px;
+  position: relative; transition: var(--transition);
+  cursor: pointer;
+}
+.nav-link:hover { color: var(--white); }
+.nav-link::after {
+  content: ''; position: absolute; bottom: -2px; left: 0;
+  width: 0; height: 1px; background: var(--blue);
+  transition: width 0.25s ease;
+}
+.nav-link:hover::after { width: 100%; }
+.nav-link.active {
+  color: var(--white); background: rgba(37,99,235,0.15);
+}
+.nav-link.active::after { display: none; }
+.nav-badge {
+  background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.4);
+  color: var(--blue-bright); border-radius: 20px; padding: 5px 14px; font-size: 12px;
+}
+.mobile-menu-btn {
+  display: none; background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;
+}
+
+/* Layout */
+.app-layout {
+  display: grid;
+  grid-template-columns: minmax(200px, 220px) 1fr minmax(250px, 280px);
+  grid-template-rows: 60px 1fr;
+  height: 100vh; overflow: hidden;
+}
+
+/* Left Sidebar */
+.sidebar-left {
+  grid-column: 1; grid-row: 2;
+  background: rgba(255,255,255,0.02);
+  border-right: 1px solid rgba(255,255,255,0.07);
+  overflow-y: auto; padding: 20px 14px; transition: left 0.3s ease;
+}
+.section-label {
+  font-size: 10px; color: var(--white-35); letter-spacing: 0.1em;
+  text-transform: uppercase; margin-bottom: 12px; margin-top: 24px;
+}
+.section-label:first-child { margin-top: 0; }
+
+.menu-item {
+  background: transparent; border: 1px solid transparent; border-radius: 10px;
+  padding: 9px 12px; font-family: var(--font-body); font-size: 13px; color: var(--white-60);
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  cursor: pointer; transition: var(--transition);
+  position: relative; overflow: hidden;
+}
+.menu-item::before {
+  content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 2px;
+  background: var(--blue); transform: translateX(-100%); transition: transform 0.3s ease;
+}
+.menu-item:hover {
+  background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.2); color: var(--white);
+}
+.menu-item:hover::before { transform: translateX(0); }
+.menu-item.active {
+  background: rgba(37,99,235,0.15); border-color: rgba(37,99,235,0.4); color: var(--blue-bright);
+}
+.menu-item.active::before { transform: translateX(0); }
+
+.epic-input {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 9px 12px; font-size: 13px; color: var(--white);
+  width: 100%; max-width: 100%; outline: none; margin-bottom: 8px; transition: var(--transition);
+}
+.epic-input:focus {
+  border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+.btn-primary {
+  background: var(--blue); border: none; border-radius: 8px; padding: 9px;
+  font-size: 13px; color: var(--white); width: 100%; cursor: pointer;
+  transition: var(--transition); font-family: var(--font-body);
+}
+.btn-primary:hover {
+  background: var(--blue-bright); box-shadow: 0 0 20px rgba(37,99,235,0.4); transform: scale(1.02);
+}
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-ghost {
+  background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+  padding: 9px; font-size: 13px; color: var(--white); cursor: pointer; transition: var(--transition);
+  font-family: var(--font-body);
+}
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.1); transform: scale(1.02);
+}
+.btn-ghost:active { transform: scale(0.97); }
+
+/* Main Content */
+.main-content {
+  grid-column: 2; grid-row: 2;
+  background: transparent; overflow-y: auto; overflow-x: hidden; padding: 24px 28px;
+  display: flex; flex-direction: column; gap: 32px;
+}
+.content-section { display: none; }
+.content-section.active { display: flex; flex-direction: column; gap: 32px; }
+
+.section-title {
+  font-family: var(--font-display); font-weight: 600; font-size: 13px;
+  color: var(--white-60); letter-spacing: 0.06em; text-transform: uppercase;
+  margin-bottom: 14px; border-left: 2px solid var(--blue); padding-left: 10px;
+}
+
+.card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: 24px; transition: var(--transition); width: 100%;
+}
+.card:hover {
+  transform: translateY(-3px); border-color: var(--border-blue);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(37,99,235,0.1);
+}
+
+/* Timeline */
+.timeline-stepper {
+  position: relative; display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px; width: 100%;
+}
+.timeline-line {
+  position: absolute; top: 16px; left: 0; width: 100%; height: 2px;
+  background: rgba(255,255,255,0.08); z-index: 1;
+}
+.timeline-progress {
+  position: absolute; top: 0; left: 0; height: 100%; background: var(--blue); width: 40%;
+}
+.timeline-step {
+  position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center;
+  gap: 8px; cursor: pointer; text-align: center; flex: 1;
+}
+.step-circle {
+  width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  transition: var(--transition); font-size: 14px; flex-shrink: 0;
+}
+.timeline-step.done .step-circle { background: var(--blue); box-shadow: 0 0 12px rgba(37,99,235,0.5); }
+.timeline-step.current .step-circle { background: var(--blue); box-shadow: 0 0 0 4px rgba(37,99,235,0.2); animation: pulse 2s infinite; }
+.timeline-step.upcoming .step-circle { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
+
+.step-label { font-size: 11px; }
+.timeline-step.done .step-label { color: var(--blue-bright); }
+.timeline-step.current .step-label { color: var(--white); font-weight: bold; }
+.timeline-step.upcoming .step-label { color: var(--white-35); }
+.step-date { font-size: 10px; color: var(--white-35); }
+
+.timeline-desc {
+  background: rgba(37,99,235,0.06); border: 1px solid rgba(37,99,235,0.2); border-radius: 10px;
+  padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease;
+  font-size: 13px; color: var(--white-60); line-height: 1.5;
+}
+.timeline-desc.open { padding: 14px 16px; max-height: 200px; }
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(37,99,235,0); }
+  100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+}
+
+/* Epic Lookup */
+.epic-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.epic-input-lg {
+  flex: 1 1 200px; background: transparent; border: none; outline: none; color: var(--white); font-size: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.2); padding: 8px 0; transition: var(--transition);
+}
+.epic-input-lg:focus { border-bottom-color: var(--blue); }
+
+.epic-result {
+  margin-top: 16px; padding: 16px; border-radius: 12px; display: none; font-size: 13px;
+}
+.epic-result.success { background: var(--success-bg); border: 1px solid var(--success); }
+.epic-result.error { background: var(--error-bg); border: 1px solid var(--error); }
+.epic-result.loading { text-align: center; color: var(--blue-bright); display: none; }
+
+/* Countdown */
+.countdown-grid { display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+.cd-box {
+  flex: 1 1 calc(25% - 16px); min-width: 80px; background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2); border-radius: 12px;
+  padding: 16px 10px; text-align: center; transition: var(--transition);
+  box-shadow: 0 4px 20px rgba(37,99,235,0.15);
+}
+.cd-box:hover { box-shadow: 0 0 30px rgba(37,99,235,0.3); }
+.cd-num { font-family: var(--font-display); font-weight: 700; font-size: 28px; color: var(--white); }
+.cd-label { font-family: var(--font-body); font-size: 11px; color: var(--white-60); margin-top: 4px; }
+
+/* Real Google Maps */
+.css-map-container {
+  background: #0d1420; border-radius: 16px; height: 350px; position: relative; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08); margin-top: 16px; width: 100%;
+}
+#gmap {
+  width: 100%; height: 100%;
+}
+.gm-style-iw {
+  color: #000; /* Info windows on GMaps are light by default */
+  font-family: var(--font-body);
+}
+.gm-style-iw b { font-family: var(--font-display); }
+
+.station-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.station-card {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+  padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: var(--transition); flex-wrap: wrap;
+}
+.station-card:hover { border-color: rgba(37,99,235,0.4); }
+.station-info { display: flex; gap: 12px; align-items: center; }
+.station-dot { width: 8px; height: 8px; background: var(--blue); border-radius: 50%; flex-shrink: 0; }
+
+/* FAQ */
+.faq-search {
+  width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 12px 16px; color: var(--white); outline: none; margin-bottom: 20px; transition: var(--transition);
+}
+.faq-search:focus { border-color: var(--blue); box-shadow: 0 0 10px rgba(37,99,235,0.2); }
+.faq-item { border-bottom: 1px solid rgba(255,255,255,0.07); }
+.faq-q {
+  padding: 16px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+  font-size: 14px; font-weight: 500; transition: var(--transition);
+}
+.faq-q:hover { color: var(--blue-bright); }
+.faq-chevron { transition: transform 0.3s ease; }
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+.faq-a {
+  max-height: 0; overflow: hidden; padding: 0 0; color: var(--white-60); font-size: 13px; line-height: 1.5; transition: all 0.3s ease;
+}
+.faq-item.open .faq-a { max-height: 300px; padding-bottom: 16px; }
+.no-results { text-align: center; color: var(--white-35); padding: 20px; display: none; }
+
+/* Eligibility */
+.wizard-progress { display: flex; align-items: center; justify-content: space-between; position: relative; margin-bottom: 30px; }
+.wizard-line { position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.1); z-index: 1; transform: translateY(-50%); }
+.wizard-fill { position: absolute; top: 50%; left: 0; height: 2px; background: var(--blue); z-index: 1; transition: width 0.5s ease; width: 0%; transform: translateY(-50%); }
+.wizard-dot { width: 20px; height: 20px; border-radius: 50%; background: #080810; border: 2px solid rgba(255,255,255,0.2); z-index: 2; transition: var(--transition); display:flex; align-items:center; justify-content:center; flex-shrink: 0;}
+.wizard-dot.active, .wizard-dot.done { border-color: var(--blue); background: var(--blue); }
+.eligibility-question { display: none; }
+.eligibility-question.active { display: block; animation: slideIn 0.3s ease forwards; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+.q-title { font-family: var(--font-display); font-size: 16px; margin-bottom: 16px; }
+.options-grid { display: flex; gap: 12px; }
+.doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+@media (max-width: 600px) { .doc-grid { grid-template-columns: 1fr; } }
+.doc-card {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: var(--transition);
+}
+.doc-card.checked { border-color: var(--blue); background: rgba(37,99,235,0.1); }
+.doc-icon { width: 20px; height: 20px; border-radius: 4px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0;}
+.doc-card.checked .doc-icon { background: var(--blue); }
+
+/* Right Sidebar (Bot) */
+.sidebar-right {
+  grid-column: 3; grid-row: 2; background: rgba(255,255,255,0.02); border-left: 1px solid rgba(255,255,255,0.07);
+  display: flex; flex-direction: column;
+}
+.bot-header {
+  padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 12px;
+}
+.bot-avatar { width: 36px; height: 36px; background: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 14px; color:white; flex-shrink:0;}
+.bot-title { font-family: var(--font-display); font-weight: 500; font-size: 14px; line-height: 1.2; }
+.bot-sub { font-size: 11px; color: var(--white-60); }
+.status-dot { display: inline-block; width: 6px; height: 6px; background: var(--success); border-radius: 50%; margin-left: 4px; vertical-align: middle; }
+
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.chat-bubble {
+  max-width: 85%; font-size: 12px; padding: 10px 14px; line-height: 1.4; animation: fadeIn 0.3s ease; word-wrap: break-word;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.bubble-bot { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px 10px 10px 3px; color: rgba(255,255,255,0.8); align-self: flex-start; }
+.bubble-user { background: var(--blue); border-radius: 10px 10px 3px 10px; color: white; align-self: flex-end; }
+.typing-dots { display: flex; gap: 4px; padding: 4px 0; }
+.dot { width: 4px; height: 4px; background: rgba(255,255,255,0.6); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+.dot:nth-child(1) { animation-delay: -0.32s; }
+.dot:nth-child(2) { animation-delay: -0.16s; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
+
+.chat-input-area { padding: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+.suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.sugg-pill {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 6px 10px; font-size: 11px; color: var(--white-60); cursor: pointer; transition: var(--transition); white-space: nowrap;
+}
+.sugg-pill:hover { background: rgba(37,99,235,0.15); color: white; border-color: rgba(37,99,235,0.3); }
+.input-row { display: flex; gap: 8px; }
+.chat-input {
+  flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 12px; color: white; outline: none; font-size: 12px; width:100%;
+}
+.chat-input:focus { border-color: var(--blue); }
+.btn-send {
+  background: var(--blue); border: none; border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); color:white; flex-shrink: 0;
+}
+.btn-send:hover { background: var(--blue-bright); box-shadow: 0 0 12px rgba(37,99,235,0.4); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+  .app-layout {
+    grid-template-columns: 220px 1fr;
+  }
+  .sidebar-right {
+    display: none; /* Hide bot on tablet initially */
+  }
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden; padding-top: 60px;
+  }
+  .sidebar-left {
+    position: fixed; top: 60px; left: -100%; width: 250px; height: calc(100vh - 60px);
+    z-index: 90; background: #080810; transition: left 0.3s ease; padding-bottom: 80px;
+  }
+  .sidebar-left.open { left: 0; border-right: 1px solid rgba(255,255,255,0.1); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+  
+  .main-content { padding: 16px; overflow-y: auto; flex: 1; }
+  
+  .timeline-stepper { flex-direction: column; align-items: flex-start; gap: 20px; }
+  .timeline-line { top: 0; left: 15px; width: 2px; height: 100%; }
+  .timeline-progress { top: 0; left: 0; height: 40%; width: 100%; }
+  .timeline-step { flex-direction: row; text-align: left; width: 100%; gap: 16px; }
+  .step-label { margin-left: 0; }
+  .step-date { margin-left: auto; }
+  
+  .nav-links { display: none; }
+  .mobile-menu-btn { display: block; }
+  
+  .countdown-grid { flex-wrap: wrap; }
+  .cd-box { min-width: 45%; }
+}
+</style>
+</head>
+<body>
+
+<nav class="top-bar" id="navbar">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+    <div class="nav-logo">ElectraGuide</div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link active" onclick="navTo('overview')">Overview</a>
+    <a class="nav-link" onclick="navTo('eligibility')">Eligibility</a>
+    <a class="nav-link" onclick="navTo('map')">Polling Map</a>
+    <a class="nav-link" onclick="navTo('faq')">FAQ</a>
+  </div>
+  <div class="nav-badge">🗳 Voting Phase</div>
+</nav>
+
+<div class="app-layout">
+  
+  <aside class="sidebar-left" id="sidebar">
+    <div class="section-label">MAIN MENU</div>
+    <div class="menu-item active" onclick="navTo('overview'); closeMobileMenu();">🏛️ Overview</div>
+    <div class="menu-item" onclick="navTo('eligibility'); closeMobileMenu();">✅ Eligibility Check</div>
+    <div class="menu-item" onclick="navTo('map'); closeMobileMenu();">📍 Polling Map</div>
+    <div class="menu-item" onclick="navTo('faq'); closeMobileMenu();">💬 FAQ</div>
+
+    <div class="section-label">MY EPIC</div>
+    <input type="text" id="sb-epic-input" class="epic-input" placeholder="Enter EPIC number..." oninput="this.value=this.value.toUpperCase()">
+    <button class="btn-primary" onclick="lookupEpic(document.getElementById('sb-epic-input').value)">Find My Booth</button>
+
+    <div class="section-label">QUICK ACTIONS</div>
+    <div class="menu-item" onclick="sendMsg('How do I register?'); closeMobileMenu();">📝 Register to Vote</div>
+    <div class="menu-item" onclick="sendMsg('What documents are required?'); closeMobileMenu();">📄 Required Documents</div>
+    <div class="menu-item" onclick="sendMsg('Voting day procedure?'); closeMobileMenu();">🧳 Voting Day Guide</div>
+  </aside>
+
+  <main class="main-content">
+    
+    <!-- OVERVIEW SECTION -->
+    <div id="section-overview" class="content-section active">
+      <div class="reveal">
+        <div class="section-title">Election Timeline</div>
+        <div class="card">
+          <div class="timeline-stepper">
+            <div class="timeline-line">
+              <div class="timeline-progress" style="width: 50%;" id="tl-prog"></div>
+            </div>
+            
+            <div class="timeline-step done" onclick="toggleTimeline(0)">
+              <div class="step-circle">✓</div>
+              <div class="step-label">Registration</div>
+              <div class="step-date">Mar 1 - 15</div>
+            </div>
+            
+            <div class="timeline-step done" onclick="toggleTimeline(1)">
+              <div class="step-circle">✓</div>
+              <div class="step-label">Campaigning</div>
+              <div class="step-date">Mar 16 - Apr 15</div>
+            </div>
+            
+            <div class="timeline-step current" onclick="toggleTimeline(2)">
+              <div class="step-circle">3</div>
+              <div class="step-label">Voting</div>
+              <div class="step-date">May 2</div>
+            </div>
+            
+            <div class="timeline-step upcoming" onclick="toggleTimeline(3)">
+              <div class="step-circle">4</div>
+              <div class="step-label">Counting</div>
+              <div class="step-date">May 5</div>
+            </div>
+            
+            <div class="timeline-step upcoming" onclick="toggleTimeline(4)">
+              <div class="step-circle">5</div>
+              <div class="step-label">Results</div>
+              <div class="step-date">May 6</div>
+            </div>
+          </div>
+          <div class="timeline-desc" id="tl-desc">Click a phase to view details.</div>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <div class="section-title">Time to Voting</div>
+        <div class="countdown-grid">
+          <div class="cd-box"><div class="cd-num" id="cd-d">00</div><div class="cd-label">days</div></div>
+          <div class="cd-box"><div class="cd-num" id="cd-h">00</div><div class="cd-label">hours</div></div>
+          <div class="cd-box"><div class="cd-num" id="cd-m">00</div><div class="cd-label">mins</div></div>
+          <div class="cd-box"><div class="cd-num" id="cd-s">00</div><div class="cd-label">secs</div></div>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <div class="section-title">Locate Your Booth</div>
+        <div class="card">
+          <div style="font-size:14px; margin-bottom:8px;">🪪 Find Your Polling Booth via EPIC</div>
+          <div class="epic-row">
+            <input type="text" id="main-epic-input" class="epic-input-lg" placeholder="Enter your EPIC Number" oninput="this.value=this.value.toUpperCase()">
+            <button class="btn-primary" style="width:auto;" onclick="lookupEpic(document.getElementById('main-epic-input').value)">Find Booth</button>
+            <button class="btn-ghost" style="width:auto;" onclick="sendMsg('Where is my EPIC number?')">Help</button>
+          </div>
+          <div id="epic-result" class="epic-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ELIGIBILITY SECTION -->
+    <div id="section-eligibility" class="content-section">
+      <div class="reveal">
+        <div class="section-title">Eligibility Check</div>
+        <div class="card">
+          <div class="wizard-progress">
+            <div class="wizard-line">
+              <div class="wizard-fill" id="wiz-fill"></div>
+            </div>
+            <div class="wizard-dot active" id="wd-0">1</div>
+            <div class="wizard-dot" id="wd-1">2</div>
+            <div class="wizard-dot" id="wd-2">3</div>
+            <div class="wizard-dot" id="wd-3">4</div>
+          </div>
+
+          <div id="wq-0" class="eligibility-question active">
+            <div class="q-title">Are you 18 years or older?</div>
+            <div class="options-grid">
+              <button class="btn-ghost" onclick="wizNext(0, true)">Yes</button>
+              <button class="btn-ghost" onclick="wizFail('You must be at least 18 years old to vote.')">No</button>
+            </div>
+          </div>
+
+          <div id="wq-1" class="eligibility-question">
+            <div class="q-title">Are you a citizen of India?</div>
+            <div class="options-grid">
+              <button class="btn-ghost" onclick="wizNext(1, true)">Yes</button>
+              <button class="btn-ghost" onclick="wizFail('Only citizens are eligible to vote.')">No</button>
+            </div>
+          </div>
+
+          <div id="wq-2" class="eligibility-question">
+            <div class="q-title">Do you have a fixed address in your constituency?</div>
+            <div class="options-grid">
+              <button class="btn-ghost" onclick="wizNext(2, true)">Yes</button>
+              <button class="btn-ghost" onclick="wizFail('You need a fixed address to be registered in a specific constituency.')">No</button>
+            </div>
+          </div>
+
+          <div id="wq-3" class="eligibility-question">
+            <div id="wiz-result" style="text-align:center; padding: 20px;"></div>
+            
+            <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px;">
+              <div class="q-title">Required Documents Checklist</div>
+              <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-bottom:12px;" id="doc-counter">0 of 6 documents confirmed</div>
+              <div class="doc-grid">
+                <div class="doc-card" onclick="toggleDoc(this)"><div class="doc-icon"></div>Voter ID (EPIC)</div>
+                <div class="doc-card" onclick="toggleDoc(this)"><div class="doc-icon"></div>Aadhaar Card</div>
+                <div class="doc-card" onclick="toggleDoc(this)"><div class="doc-icon"></div>Passport</div>
+                <div class="doc-card" onclick="toggleDoc(this)"><div class="doc-icon"></div>Driving Licence</div>
+                <div class="doc-card" onclick="toggleDoc(this)"><div class="doc-icon"></div>PAN Card</div>
+                <div class="doc-card" onclick="toggleDoc(this)"><div class="doc-icon"></div>MNREGA Job Card</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- MAP SECTION -->
+    <div id="section-map" class="content-section">
+      <div class="reveal">
+        <div class="section-title">Interactive Navigation Map</div>
+        <div class="card" style="padding: 16px;">
+          <div class="css-map-container" id="map-wrap">
+            <div id="gmap"></div>
+          </div>
+          
+          <button class="btn-primary" style="margin-top:16px;" onclick="requestDirectionsGlobal()">Get Directions to Booth</button>
+
+          <div class="station-list" id="global-station-list">
+            <div class="station-card" onclick="viewMapLocation(15.8497, 74.4977, 'Govt. High School No. 1', 'MG Road, Ward 4')">
+              <div class="station-info"><div class="station-dot"></div><div><b>Govt. High School No. 1</b><br><span style="font-size:11px; color:rgba(255,255,255,0.6);">MG Road, Ward 4 | 7AM - 6PM</span></div></div>
+              <button class="btn-ghost" style="padding:4px 8px; width:auto; font-size:11px;" onclick="event.stopPropagation(); getDirections(15.8497, 74.4977)">Navigate</button>
+            </div>
+            <div class="station-card" onclick="viewMapLocation(16.7050, 74.2433, 'Town Hall Auditorium', 'Station Road, Ward 4')">
+              <div class="station-info"><div class="station-dot" style="background:rgba(37,99,235,0.5)"></div><div><b>Town Hall Auditorium</b><br><span style="font-size:11px; color:rgba(255,255,255,0.6);">Station Road, Ward 4 | 7AM - 6PM</span></div></div>
+              <button class="btn-ghost" style="padding:4px 8px; width:auto; font-size:11px;" onclick="event.stopPropagation(); getDirections(16.7050, 74.2433)">Navigate</button>
+            </div>
+            <div class="station-card" onclick="viewMapLocation(28.6139, 77.2090, 'Kendriya Vidyalaya No. 3', 'Rajouri Garden, Ward 2')">
+              <div class="station-info"><div class="station-dot" style="background:rgba(37,99,235,0.5)"></div><div><b>Kendriya Vidyalaya No. 3</b><br><span style="font-size:11px; color:rgba(255,255,255,0.6);">Rajouri Garden, Ward 2 | 7AM - 6PM</span></div></div>
+              <button class="btn-ghost" style="padding:4px 8px; width:auto; font-size:11px;" onclick="event.stopPropagation(); getDirections(28.6139, 77.2090)">Navigate</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ SECTION -->
+    <div id="section-faq" class="content-section">
+      <div class="reveal">
+        <div class="section-title">Frequently Asked Questions</div>
+        <div class="card">
+          <input type="text" class="faq-search" placeholder="Search questions..." id="faq-search" oninput="filterFaqs(this.value)">
+          <div id="faq-list">
+            <!-- FAQs injected via JS -->
+          </div>
+          <div class="no-results" id="faq-empty">No questions found for '<span id="faq-query"></span>'</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <aside class="sidebar-right">
+    <div class="bot-header">
+      <div class="bot-avatar">EG</div>
+      <div>
+        <div class="bot-title">ElectraBot</div>
+        <div class="bot-sub">Election Guide AI <span class="status-dot"></span></div>
+      </div>
+    </div>
+    
+    <div class="chat-messages" id="chat-msgs">
+      <div class="chat-bubble bubble-bot">Hello! I can help with voter registration, EPIC numbers, eligibility, and voting day procedures. How can I assist you today?</div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="suggestions" id="bot-sugg">
+        <div class="sugg-pill" onclick="sendMsg('How do I register?')">How do I register?</div>
+        <div class="sugg-pill" onclick="sendMsg('What is EPIC?')">What is EPIC?</div>
+        <div class="sugg-pill" onclick="sendMsg('Am I eligible?')">Am I eligible?</div>
+        <div class="sugg-pill" onclick="sendMsg('Voting day steps?')">Voting day steps?</div>
+      </div>
+      <div class="input-row">
+        <input type="text" class="chat-input" id="chat-input" placeholder="Ask me anything..." onkeypress="if(event.key==='Enter') sendMsgInput()">
+        <button class="btn-send" onclick="sendMsgInput()">➤</button>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- Google Maps Script -->
+<script src="https://maps.googleapis.com/maps/api/js?callback=initMap" async defer></script>
+
+<script>
+// --- GLOBAL & RESPONSIVE ---
+function toggleMobileMenu() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+function closeMobileMenu() {
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('open');
+  }
+}
+
+function navTo(sectionId) {
+  document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+  document.getElementById('section-' + sectionId).classList.add('active');
+  
+  document.querySelectorAll('.menu-item, .nav-link').forEach(el => {
+    el.classList.remove('active');
+    if (el.textContent.toLowerCase().includes(sectionId) || el.getAttribute('onclick').includes(sectionId)) {
+      el.classList.add('active');
+    }
+  });
+
+  // Handle map resize issue when tab opens
+  if (sectionId === 'map' && map) {
+    google.maps.event.trigger(map, 'resize');
+    if (currentLatLng) map.setCenter(currentLatLng);
+  }
+}
+
+// Scroll Event
+document.querySelector('.main-content').addEventListener('scroll', (e) => {
+  if (e.target.scrollTop > 60) document.getElementById('navbar').classList.add('scrolled');
+  else document.getElementById('navbar').classList.remove('scrolled');
+});
+
+// Reveal Observer
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach((el, i) => {
+  el.style.transitionDelay = (i * 0.08) + 's';
+  observer.observe(el);
+});
+
+// Update timeline line width on mobile based on screen
+function adjustTimelineLine() {
+  if (window.innerWidth <= 768) {
+    document.getElementById('tl-prog').style.width = '100%';
+    document.getElementById('tl-prog').style.height = '50%';
+  } else {
+    document.getElementById('tl-prog').style.height = '100%';
+    document.getElementById('tl-prog').style.width = '50%';
+  }
+}
+window.addEventListener('resize', adjustTimelineLine);
+adjustTimelineLine();
+
+// --- TIMELINE ---
+const tlDescriptions = [
+  "During the Registration phase, eligible citizens can apply to be added to the electoral roll. Ensure you have proper ID and address proof.",
+  "Candidates organize rallies, debates, and public speeches to present their manifestos to the public.",
+  "On Voting Day, polling stations are open. Voters verify their identity and cast their vote using EVMs.",
+  "EVMs are opened in secure counting centers and votes are tallied by Election Commission officials.",
+  "Final results are officially declared by the Returning Officer for each constituency."
+];
+function toggleTimeline(idx) {
+  const descEl = document.getElementById('tl-desc');
+  if (descEl.dataset.current === String(idx) && descEl.classList.contains('open')) {
+    descEl.classList.remove('open');
+  } else {
+    descEl.textContent = tlDescriptions[idx];
+    descEl.classList.add('open');
+    descEl.dataset.current = idx;
+  }
+}
+
+// --- COUNTDOWN ---
+function startCountdown() {
+  const target = new Date('2026-05-02T18:00:00');
+  setInterval(() => {
+    const diff = Math.max(0, target - new Date());
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    document.getElementById('cd-d').textContent = String(d).padStart(2,'0');
+    document.getElementById('cd-h').textContent = String(h).padStart(2,'0');
+    document.getElementById('cd-m').textContent = String(m).padStart(2,'0');
+    document.getElementById('cd-s').textContent = String(s).padStart(2,'0');
+  }, 1000);
+}
+startCountdown();
+
+// --- MAP & GEOLOCATION ---
+let map;
+let marker;
+let infoWindow;
+let currentLatLng = null;
+
+function initMap() {
+  // Map initializes centered on India
+  map = new google.maps.Map(document.getElementById('gmap'), {
+    center: { lat: 20.5937, lng: 78.9629 },
+    zoom: 5,
+    styles: [
+      { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+      { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+      { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+      { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#d59563' }] },
+      { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#38414e' }] },
+      { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#212a37' }] },
+      { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#9ca5b3' }] },
+      { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#17263c' }] },
+      { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#515c6d' }] },
+      { featureType: 'water', elementType: 'labels.text.stroke', stylers: [{ color: '#17263c' }] }
+    ],
+    disableDefaultUI: true,
+    zoomControl: true
+  });
+  infoWindow = new google.maps.InfoWindow();
+}
+
+function viewMapLocation(lat, lng, title, address) {
+  if (!map) return;
+  currentLatLng = { lat, lng };
+  
+  map.setCenter(currentLatLng);
+  map.setZoom(16);
+
+  if (marker) marker.setMap(null);
+  
+  marker = new google.maps.Marker({
+    position: currentLatLng,
+    map: map,
+    title: title,
+    animation: google.maps.Animation.DROP
+  });
+
+  const contentStr = `
+    <div style="color: #080810; padding:4px; font-family:var(--font-body); max-width:200px;">
+      <div style="font-weight:bold; font-size:14px; margin-bottom:4px; font-family:var(--font-display);">${title}</div>
+      <div style="font-size:12px; margin-bottom:10px;">${address}</div>
+      <button onclick="getDirections(${lat}, ${lng})" style="background:#2563eb; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; width:100%;">Get Directions</button>
+    </div>
+  `;
+  infoWindow.setContent(contentStr);
+  infoWindow.open(map, marker);
+
+  marker.addListener('click', () => {
+    infoWindow.open(map, marker);
+  });
+  
+  navTo('map');
+}
+
+function getDirections(destLat, destLng) {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const originLat = position.coords.latitude;
+        const originLng = position.coords.longitude;
+        window.open(`https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}`, '_blank');
+      },
+      (error) => {
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}`, '_blank');
+      }
+    );
+  } else {
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}`, '_blank');
+  }
+}
+
+function requestDirectionsGlobal() {
+  if (currentLatLng) {
+    getDirections(currentLatLng.lat, currentLatLng.lng);
+  } else {
+    alert('Please select a polling station first.');
+  }
+}
+
+// --- EPIC LOOKUP ---
+const EPIC_DB = {
+  "KAR0012345678": { name:"Rahul Sharma", constituency:"Belagavi North", booth:"Govt. High School No. 1", address:"MG Road, Ward 4, Belagavi", part:"Part 12, Serial 087", distance:"0.4 km", lat: 15.8497, lng: 74.4977 },
+  "KAR0098765432": { name:"Priya Desai", constituency:"Belagavi South", booth:"Town Hall Auditorium", address:"Station Road, Ward 4, Belagavi", part:"Part 8, Serial 043", distance:"1.1 km", lat: 15.8500, lng: 74.5000 },
+  "MH0045678901": { name:"Aditya Kulkarni", constituency:"Kolhapur East", booth:"Municipal Primary School", address:"Nehru Nagar, Ward 7, Kolhapur", part:"Part 3, Serial 112", distance:"0.8 km", lat: 16.7050, lng: 74.2433 },
+  "DL0023456789": { name:"Sunita Mehta", constituency:"New Delhi West", booth:"Kendriya Vidyalaya No. 3", address:"Rajouri Garden, Ward 2, Delhi", part:"Part 5, Serial 026", distance:"1.4 km", lat: 28.6139, lng: 77.2090 },
+  "TN0056789012": { name:"Karthik Rajan", constituency:"Chennai Central", booth:"Corporation Higher Secondary School", address:"Anna Salai, Ward 9, Chennai", part:"Part 7, Serial 054", distance:"0.6 km", lat: 13.0827, lng: 80.2707 }
+};
+
+function lookupEpic(val) {
+  if (!val) return;
+  closeMobileMenu();
+  const res = document.getElementById('epic-result');
+  res.className = 'epic-result loading';
+  res.style.display = 'block';
+  res.textContent = 'Searching database...';
+  
+  setTimeout(() => {
+    const data = EPIC_DB[val];
+    if (data) {
+      res.className = 'epic-result success';
+      res.innerHTML = `<strong style="color:var(--success)">✅ Match Found</strong><br><br>
+        Name: <b>${data.name}</b><br>
+        Constituency: ${data.constituency}<br>
+        Booth: <b>${data.booth}</b><br>
+        Address: ${data.address}<br>
+        Distance: <span style="color:var(--blue-bright)">${data.distance}</span><br>
+        <button class="btn-primary" style="margin-top:12px;" onclick="viewMapLocation(${data.lat}, ${data.lng}, '${data.booth}', '${data.address}')">View on Map & Navigate</button>`;
+    } else {
+      res.className = 'epic-result error';
+      res.innerHTML = `❌ EPIC not found.<br>Try testing with: <b>KAR0012345678</b>`;
+    }
+  }, 500);
+}
+
+// --- ELIGIBILITY ---
+let wizStep = 0;
+let docCount = 0;
+function wizNext(current, passed) {
+  document.getElementById(`wd-${current}`).classList.add('done');
+  document.getElementById(`wq-${current}`).classList.remove('active');
+  wizStep++;
+  document.getElementById('wiz-fill').style.width = (wizStep * 33.33) + '%';
+  document.getElementById(`wd-${wizStep}`).classList.add('active');
+  document.getElementById(`wq-${wizStep}`).classList.add('active');
+  
+  if (wizStep === 3) {
+    document.getElementById('wiz-result').innerHTML = `<div style="color:var(--success); font-family:var(--font-display); font-size:20px; border:1px solid var(--success); padding:16px; border-radius:12px; background:var(--success-bg);">✅ You are eligible to vote!</div>`;
+  }
+}
+function wizFail(reason) {
+  document.getElementById(`wq-${wizStep}`).classList.remove('active');
+  wizStep = 3;
+  document.getElementById('wiz-fill').style.width = '100%';
+  document.getElementById(`wd-3`).classList.add('active');
+  document.getElementById(`wq-3`).classList.add('active');
+  document.getElementById('wiz-result').innerHTML = `<div style="color:var(--error); font-family:var(--font-display); font-size:16px; border:1px solid var(--error); padding:16px; border-radius:12px; background:var(--error-bg);">❌ Not Eligible<br><span style="font-size:13px; font-family:var(--font-body); font-weight:400;">${reason}</span></div>`;
+}
+function toggleDoc(el) {
+  el.classList.toggle('checked');
+  if (el.classList.contains('checked')) {
+    el.querySelector('.doc-icon').textContent = '✓';
+    docCount++;
+  } else {
+    el.querySelector('.doc-icon').textContent = '';
+    docCount--;
+  }
+  document.getElementById('doc-counter').textContent = `${docCount} of 6 documents confirmed`;
+}
+
+// --- FAQ ---
+const FAQS = [
+  { q: "What is an EPIC number?", a: "EPIC stands for Electors Photo Identity Card. It's the 10-13 character alphanumeric code on your Voter ID." },
+  { q: "How do I register to vote?", a: "Fill Form 6 online at voters.eci.gov.in or via the Voter Helpline App. You'll need proof of age and residence." },
+  { q: "Am I eligible to vote?", a: "Yes, if you are an Indian citizen, 18 years or older as of the qualifying date, and ordinarily resident in the polling area." },
+  { q: "What documents are needed on voting day?", a: "Bring your Voter ID. If you don't have it, bring Aadhaar, Passport, PAN Card, Driving Licence, or MNREGA card." },
+  { q: "How do I find my polling booth?", a: "Use our EPIC lookup tool or check the ECI portal. You can only vote at the specific booth assigned to you." },
+  { q: "What is a VVPAT machine?", a: "Voter Verifiable Paper Audit Trail. It prints a slip visible for 7 seconds confirming the candidate you voted for." },
+  { q: "How do EVMs work?", a: "Electronic Voting Machines record your vote electronically, ensuring a faster, tamper-proof counting process." },
+  { q: "Can NRIs vote?", a: "Yes, Non-Resident Indians can vote by filling Form 6A, but they must be physically present at the polling booth." },
+  { q: "What is the Model Code of Conduct (MCC)?", a: "Guidelines for political parties to ensure free and fair elections, preventing misuse of official machinery." },
+  { q: "Is voting compulsory?", a: "No, voting is a democratic right in India, but it is not legally compulsory." },
+  { q: "When are results declared?", a: "Results are declared on Counting Day, usually a few days after the final phase of polling concludes." },
+  { q: "Can differently-abled voters get assistance?", a: "Yes, polling stations provide ramps, wheelchairs, and volunteers. Postal ballots are also available in some states." },
+  { q: "What is Form 6?", a: "Form 6 is the application for inclusion of name in the electoral roll for first-time voters." },
+  { q: "Can I vote online?", a: "No, India currently does not allow online voting. You must visit the polling station." },
+  { q: "What if my name is not on the voter list?", a: "You cannot vote. You must ensure your name is registered before the deadline." }
+];
+
+const faqList = document.getElementById('faq-list');
+function renderFaqs(list) {
+  faqList.innerHTML = '';
+  list.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'faq-item reveal visible';
+    item.innerHTML = `
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+        <span>${f.q}</span><span class="faq-chevron">▼</span>
+      </div>
+      <div class="faq-a">${f.a}</div>
+    `;
+    faqList.appendChild(item);
+  });
+}
+renderFaqs(FAQS);
+
+function filterFaqs(q) {
+  const term = q.toLowerCase();
+  const filtered = FAQS.filter(f => f.q.toLowerCase().includes(term) || f.a.toLowerCase().includes(term));
+  renderFaqs(filtered);
+  const empty = document.getElementById('faq-empty');
+  if (filtered.length === 0) {
+    empty.style.display = 'block';
+    document.getElementById('faq-query').textContent = q;
+  } else {
+    empty.style.display = 'none';
+  }
+}
+
+// --- BOT ---
+const BOT_RESPONSES = {
+  "register": "To register, visit voters.eci.gov.in or your nearest ERO. Fill Form 6 with photo ID + address proof. Deadline is 7 days before election day.",
+  "epic": "Your EPIC number is printed on your Voter ID card — top right corner, 3 letters + 7-10 digits (e.g. KAR0012345678). You can also find it at voters.eci.gov.in.",
+  "eligible": "To vote in India you must be: 18+ years old, an Indian citizen, and have a fixed address in the constituency. Use the Eligibility tab to check step by step!",
+  "document": "Carry any one of: EPIC/Voter ID (primary), Aadhaar, Passport, Driving Licence, PAN Card, or MNREGA Job Card. All must have your photo.",
+  "booth": "Enter your EPIC number in the lookup box to find your exact polling booth, address, and roll number. Voting must happen at your assigned booth only.",
+  "voting day": "Polling opens 7AM and closes 6PM. Bring your ID, join the queue, get your finger inked, press your EVM choice, and verify on the VVPAT slip.",
+  "evm": "EVM stands for Electronic Voting Machine. It records your vote electronically. After pressing the button, a paper slip appears in the VVPAT window for 7 seconds to confirm.",
+  "vvpat": "VVPAT (Voter Verifiable Paper Audit Trail) shows a paper slip for 7 seconds after you vote confirming your choice, then drops into a sealed box.",
+  "count": "After polls close, EVMs are sealed and stored securely. On counting day they're opened and tallied constituency-wise. Results are declared by the Returning Officer.",
+  "deadline": "Registration deadline is typically 7–30 days before election day depending on your state. Check voters.eci.gov.in for exact dates.",
+  "default": "I can help with voter registration, EPIC numbers, eligibility checks, required documents, polling booths, and voting procedures. What would you like to know?"
+};
+
+function getBotResponse(msg) {
+  const m = msg.toLowerCase();
+  for (const key in BOT_RESPONSES) {
+    if (key !== 'default' && m.includes(key)) return BOT_RESPONSES[key];
+  }
+  return BOT_RESPONSES.default;
+}
+
+const chatMsgs = document.getElementById('chat-msgs');
+let lastBotMessage = "";
+
+function sendMsgInput() {
+  const inp = document.getElementById('chat-input');
+  if (inp.value.trim() !== '') {
+    sendMsg(inp.value.trim());
+    inp.value = '';
+  }
+}
+
+function sendMsg(text) {
+  document.getElementById('bot-sugg').style.display = 'none';
+
+  const ub = document.createElement('div');
+  ub.className = 'chat-bubble bubble-user';
+  ub.textContent = text;
+  chatMsgs.appendChild(ub);
+  chatMsgs.scrollTop = chatMsgs.scrollHeight;
+
+  const tb = document.createElement('div');
+  tb.className = 'chat-bubble bubble-bot typing-indicator';
+  tb.innerHTML = '<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  chatMsgs.appendChild(tb);
+  chatMsgs.scrollTop = chatMsgs.scrollHeight;
+
+  setTimeout(() => {
+    tb.remove();
+    let resp = getBotResponse(text);
+    if (resp === lastBotMessage && resp !== BOT_RESPONSES.default) {
+      resp = "Is there anything else specific you'd like to know about this topic?";
+    }
+    lastBotMessage = resp;
+
+    const bb = document.createElement('div');
+    bb.className = 'chat-bubble bubble-bot';
+    bb.textContent = resp;
+    chatMsgs.appendChild(bb);
+    
+    const sugg = document.createElement('div');
+    sugg.style.fontSize = '10px'; sugg.style.color = 'var(--white-35)'; sugg.style.marginTop = '-4px'; sugg.style.alignSelf = 'flex-start';
+    sugg.innerHTML = `Try asking: <span style="color:var(--blue); cursor:pointer;" onclick="sendMsg('What is the deadline?')">What is the deadline?</span>`;
+    chatMsgs.appendChild(sugg);
+    
+    chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  }, 1000 + Math.random() * 800);
+}
+</script>
+
+</body>
+</html>

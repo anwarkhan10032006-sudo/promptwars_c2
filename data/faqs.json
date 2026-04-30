@@ -1,0 +1,17 @@
+[
+    { "id": "faq1", "question": "How do I register to vote?", "answer": "You can register online, by mail, or in person at your local election office. You will need a valid ID and proof of residence." },
+    { "id": "faq2", "question": "Am I eligible to vote?", "answer": "Generally, you must be a citizen, at least 18 years old on Election Day, and meet your state's residency requirements." },
+    { "id": "faq3", "question": "What is the deadline to register?", "answer": "Deadlines vary by location, but typically range from 15 to 30 days before the election. Some places offer same-day registration." },
+    { "id": "faq4", "question": "Where is my polling station?", "answer": "You can find your polling station on your local election board's website or by using our interactive map." },
+    { "id": "faq5", "question": "What ID do I need to bring?", "answer": "ID requirements vary. Some states require photo ID, while others accept a utility bill or bank statement." },
+    { "id": "faq6", "question": "Can I vote early?", "answer": "Many places offer early in-person voting. Check your local election office for dates and locations." },
+    { "id": "faq7", "question": "How do I get an absentee ballot?", "answer": "You can request an absentee ballot through your local election office. Some places send them automatically to all registered voters." },
+    { "id": "faq8", "question": "What if I miss the registration deadline?", "answer": "If your state offers same-day registration, you can register at the polling place on Election Day. Otherwise, you may not be able to vote." },
+    { "id": "faq9", "question": "How are votes counted?", "answer": "Votes are counted using secure machines and, in some cases, hand-counted by election officials. Results undergo audits to ensure accuracy." },
+    { "id": "faq10", "question": "When will results be announced?", "answer": "Preliminary results are often announced on election night, but official results can take days or weeks as mail-in and provisional ballots are verified." },
+    { "id": "faq11", "question": "What is a provisional ballot?", "answer": "A provisional ballot is used to record a vote when there are questions about a given voter's eligibility. It is counted after eligibility is verified." },
+    { "id": "faq12", "question": "Can I get time off work to vote?", "answer": "Many states require employers to give employees time off to vote, often paid. Check your specific state laws." },
+    { "id": "faq13", "question": "Who is running in my district?", "answer": "Sample ballots showing all candidates for your specific district are usually mailed to you or available online via your local election office." },
+    { "id": "faq14", "question": "What if my name isn't on the voter roll?", "answer": "You should ask for a provisional ballot and contact your election office to resolve the issue." },
+    { "id": "faq15", "question": "How can I volunteer to be a poll worker?", "answer": "You can sign up to be a poll worker through your local or state election office's website." }
+]

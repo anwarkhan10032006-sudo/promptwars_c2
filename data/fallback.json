@@ -1,0 +1,16 @@
+{
+    "phases": [
+        { "id": "registration", "name": "Registration", "description": "Ensure you are registered to vote before the deadline." },
+        { "id": "campaigning", "name": "Campaigning", "description": "Candidates present their platforms to the public." },
+        { "id": "voting", "name": "Voting", "description": "Cast your ballot at your designated polling station." },
+        { "id": "counting", "name": "Counting", "description": "Election officials are actively counting the votes." },
+        { "id": "results", "name": "Results", "description": "Preliminary and official results are announced." }
+    ],
+    "timeline": {
+        "registration": { "start": "2026-01-01", "end": "2026-09-30" },
+        "campaigning": { "start": "2026-10-01", "end": "2026-11-02" },
+        "voting": { "start": "2026-11-03", "end": "2026-11-03" },
+        "counting": { "start": "2026-11-04", "end": "2026-11-10" },
+        "results": { "start": "2026-11-11", "end": "2026-12-31" }
+    }
+}
