@@ -703,22 +703,27 @@ try {
   }
   
   const pill = document.createElement('div');
-  pill.style.position = 'fixed'; pill.style.bottom = '12px'; pill.style.right = '12px';
-  pill.style.padding = '6px 12px'; pill.style.borderRadius = '20px'; pill.style.fontSize = '11px';
-  pill.style.zIndex = '1000'; pill.style.fontFamily = 'var(--font-body)';
+  pill.className = 'nav-badge';
   pill.style.background = 'rgba(22,163,74,0.15)'; pill.style.color = 'var(--success)';
   pill.style.border = '1px solid rgba(22,163,74,0.4)'; pill.innerHTML = '🟢 Live Sync Active';
-  document.body.appendChild(pill);
+  if (badge && badge.parentElement) {
+    badge.parentElement.insertBefore(pill, badge.nextSibling);
+  } else {
+    document.body.appendChild(pill);
+  }
   
 } catch(e) {
   console.warn("[ElectraGuide Error] Firebase init: " + e.message);
   const pill = document.createElement('div');
-  pill.style.position = 'fixed'; pill.style.bottom = '12px'; pill.style.right = '12px';
-  pill.style.padding = '6px 12px'; pill.style.borderRadius = '20px'; pill.style.fontSize = '11px';
-  pill.style.zIndex = '1000'; pill.style.fontFamily = 'var(--font-body)';
+  pill.className = 'nav-badge';
   pill.style.background = 'var(--error-bg)'; pill.style.color = 'var(--error)';
   pill.style.border = '1px solid var(--error)'; pill.innerHTML = '🔴 Offline Mode';
-  document.body.appendChild(pill);
+  const badge = document.getElementById('data-source-badge');
+  if (badge && badge.parentElement) {
+    badge.parentElement.insertBefore(pill, badge.nextSibling);
+  } else {
+    document.body.appendChild(pill);
+  }
 }
 
 function logAnalytics(eventName, params = {}) {
