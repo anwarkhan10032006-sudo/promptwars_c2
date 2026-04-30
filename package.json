@@ -2,8 +2,9 @@
   "name": "electraguide",
   "version": "1.0.0",
   "description": "AI-powered assistant that helps users understand the election process.",
-  "main": "index.html",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "dev": "npx serve .",
     "test": "jest",
     "test:ci": "jest --ci --coverage"
@@ -22,5 +23,8 @@
     "collectCoverageFrom": [
       "js/**/*.js"
     ]
+  },
+  "dependencies": {
+    "express": "^5.2.1"
   }
 }
